@@ -24,7 +24,7 @@ echo "sampleformat = $(bashio::config 'stream.sampleformat')" >> "${config}"
 
 echo "[http]" >> "${config}"
 echo "enabled = $(bashio::config 'http.enabled')" >> "${config}"
-echo "doc_root = $(bashio::config 'http.docroot')" >> "${config}"
+echo "doc_root = $(bashio::config 'http.doc_root')" >> "${config}"
 
 echo "[tcp]" >> "${config}"
 echo "enabled = $(bashio::config 'tcp.enabled')" >> "${config}"
