@@ -32,21 +32,21 @@ options:
     datadir: "/share/snapcast/"
 schema:
   stream:
-    streams: "str"
-    buffer: "int"
-    codec: "str"
-    send_to_muted: "str"
-    sampleformat: "str"
+    streams: str
+    buffer: int
+    codec: str
+    send_to_muted: str
+    sampleformat: str
   http:
-    enabled: "str"
-    doc_root: "str"
+    enabled: str
+    doc_root: str
   tcp:
-    enabled: "str"
+    enabled: str
   logging :
-    enabled: "str"
+    enabled: str
   server:
-    threads: "int"
-    datadir: "str"
+    threads: int
+    datadir: str
 ports:
   1704/tcp: 1704
   1705/tcp: 1705
