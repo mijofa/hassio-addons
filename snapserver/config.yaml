@@ -13,28 +13,6 @@ startup: system
 boot: auto
 map:
   - share:rw
-options:
-  http:
-    enabled: true
-    doc_root: "/usr/share/snapserver/snapweb/"
-  tcp:
-    enabled: true
-  logging:
-    enabled: true
-  server:
-    threads: "-1"
-    datadir: "/share/snapcast/"
-schema:
-  http:
-    enabled: str
-    doc_root: str
-  tcp:
-    enabled: str
-  logging :
-    enabled: str
-  server:
-    threads: int
-    datadir: str
 ports:
   1704/tcp: 1704
   1705/tcp: 1705
