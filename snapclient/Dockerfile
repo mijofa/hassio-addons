@@ -7,9 +7,6 @@ ENV LANG C.UTF-8
 #Install snapcast
 RUN apk add --no-cache snapcast bash
 
-ARG BUILD_FROM
-FROM ${BUILD_FROM}
-
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 ARG ALSA_VERSION
