@@ -1,7 +1,5 @@
 #!/bin/bash
 
-apt update
-
 CONFIG_PATH=/data/options.json
 
 SNAPCLIENT_OPTS=$(jq --raw-output ".snapclientopts" $CONFIG_PATH)
