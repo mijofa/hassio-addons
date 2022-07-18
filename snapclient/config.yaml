@@ -1,5 +1,5 @@
 name: "snapcast-client"
-version: "beta"
+version: "1.0"
 slug: "snapcastclient"
 init: false
 description: "Snapcast client"
