@@ -16,3 +16,6 @@ arch:
   - armhf
   - armv7
   - i386
+args:
+  ALSA_VERSION: 1.2.5.1
+  PULSE_VERSION: 14.2
