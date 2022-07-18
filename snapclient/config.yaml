@@ -1,6 +1,7 @@
 name: "snapcast-client"
 version: "beta"
 slug: "snapcastclient"
+init: false
 description: "Snapcast client"
 startup: "services"
 boot: auto
