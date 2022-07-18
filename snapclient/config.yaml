@@ -1,0 +1,17 @@
+name: "snapcast-client"
+version: "beta"
+slug: "snapcastclient"
+description: "Snapcast client"
+startup: "services"
+boot: auto
+audio: true
+options:
+  snapclientopts: "-h snapcastserver"
+schema:
+  snapclientopts: str
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
