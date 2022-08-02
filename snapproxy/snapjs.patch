@@ -1,0 +1,39 @@
+--- /usr/share/snapserver/snapweb/snapcontrol.js    2022-08-02 22:56:21.695155890 +1000
++++ /usr/share/snapserver/snapweb/snapcontrol.js    2022-08-02 22:56:27.151067131 +1000
+@@ -188,12 +188,14 @@
+     constructor(baseUrl) {
+         this.server = new Server();
+         this.baseUrl = baseUrl;
++        this.rpc_url = new URL('jsonrpc', window.location)
++        this.rpc_url.protocol = 'wss'
+         this.msg_id = 0;
+         this.status_req_id = -1;
+         this.connect();
+     }
+     connect() {
+-        this.connection = new WebSocket(this.baseUrl + '/jsonrpc');
++        this.connection = new WebSocket(this.rpc_url);
+         this.connection.onmessage = (msg) => this.onMessage(msg.data);
+         this.connection.onopen = () => { this.status_req_id = this.sendRequest('Server.GetStatus'); };
+         this.connection.onerror = (ev) => { console.error('error:', ev); };
+--- /usr/share/snapserver/snapweb/snapstream.js 2022-08-02 22:56:21.695155890 +1000
++++ /usr/share/snapserver/snapweb/snapstream.js 2022-08-02 22:56:24.559109297 +1000
+@@ -703,7 +703,8 @@
+ }
+ class SnapStream {
+     constructor(baseUrl) {
+-        this.baseUrl = baseUrl;
++        this.streamurl = new URL('stream', window.location)
++        this.streamurl.protocol = 'wss'
+         this.timeProvider = new TimeProvider();
+         if (this.setupAudioContext()) {
+             this.connect();
+@@ -738,7 +739,7 @@
+         return getPersistentValue("uniqueId", uuidv4());
+     }
+     connect() {
+-        this.streamsocket = new WebSocket(this.baseUrl + '/stream');
++        this.streamsocket = new WebSocket(this.streamurl);
+         this.streamsocket.binaryType = "arraybuffer";
+         this.streamsocket.onmessage = (ev) => this.onMessage(ev);
+         this.streamsocket.onopen = () => {

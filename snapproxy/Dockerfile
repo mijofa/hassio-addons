@@ -5,9 +5,10 @@ FROM $BUILD_FROM
 ENV LANG C.UTF-8
 
 #Install snapcast
-RUN apk add --no-cache snapcast
+RUN apk add --no-cache snapcast patch
 
-
+COPY snapjs.patch /
+RUN patch -p0 -i /snapjs.patch
 
 # Copy data for add-on
 COPY run.sh /
