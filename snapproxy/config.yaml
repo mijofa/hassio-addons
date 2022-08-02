@@ -1,6 +1,6 @@
 name: "snapcast-proxy"
 description: "Snapcast Client & Server proxy"
-version: "0.27"
+version: "0.29"
 slug: "snapcastproxy"
 init: false
 arch:
@@ -20,18 +20,18 @@ ports:
   4953/tcp: 4953
 schema:
   stream:
-    streams: str
+    #    sources: list(str)
     buffer: int
     codec: str
-    send_to_muted: str
+    send_to_muted: bool
     sampleformat: str
   http:
-    enabled: str
+    enabled: bool
     doc_root: str
   tcp:
-    enabled: str
+    enabled: bool
   logging :
-    enabled: str
+    enabled: bool
   server:
     threads: int
     datadir: str
@@ -39,18 +39,18 @@ schema:
 options:
   stream:
     streams: '["process:///usr/bin/snapclient?name=Snapclient&params=--host%20$UPSTREAM_SNAPSERVER%20--player%20file:filename=stdout"]'
-    buffer: "1000"
+    buffer: 1000
     codec: "flac"
-    send_to_muted: 'true'
+    send_to_muted: true
     sampleformat: "48000:16:2"
   http:
-    enabled: 'true'
+    enabled: true
     doc_root: "/usr/share/snapserver/snapweb/"
   tcp:
-    enabled: 'true'
+    enabled: true
   logging:
-    enabled: 'true'
+    enabled: true
   server:
-    threads: "-1"
+    threads: -1
     datadir: "/share/snapcast/"
   upstream_snapserver: "snapcastserver"
