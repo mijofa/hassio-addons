@@ -1,30 +1,40 @@
 ---
 configuration:
-  stream:
-    sources:
-      name: "Snapserver sources"
-      description: "Space separated list of source URIs for snapserver streams (use %20 for spaces in the source)"
-    sampleformat:
-      name: "Default sample format"
-    codec:
-      name: "Default transport codec"
-    chunk_ms:
-      name: "Default source stream read chunk size [ms]"
-    buffer:
-      name: "Buffer [ms]"
-    send_to_muted:
-      name: "Send audio to muted clients"
-  http:
-    enabled:
-      name: "Enable HTTP Json RPC (HTTP POST and websockets)"
-    doc_root:
-      name: "Serve a website from the doc_root location"
-      description: "Disabled if empty, the default of '/usr/share/snapserver/snapweb' is a web-based snapserver controller"
-  tcp:
-    enabled:
-      name: "Enable TCP Json RPC"
-  server:
-    threads:
-      name: "Number of additional worker threads to use"
-    datadir:
-      name: "Directory where persistent data is stored"
+  stream.sources:
+    name: "Source URI"
+    description: "List of source URIs for snapserver streams"
+  stream.sampleformat:
+    name: "Default sample format"
+  stream.codec:
+    name: "Default transport codec"
+  stream.chunk_ms:
+    name: "Default source stream read chunk size [ms]"
+  stream.buffer:
+    name: "Buffer [ms]"
+  stream.send_to_muted:
+    name: "Send audio to muted clients"
+
+  server.threads:
+    name: "Number of additional worker threads to use"
+
+  logging.filter:
+    name: "Log filter"
+    description: >-
+      <tag>:<level>[,<tag>:<level>]*
+      With tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]
+
+# FIXME: Everything below this should just be set as is and not messed with I reckon
+  http.enabled:
+    name: "Enable HTTP Json RPC (HTTP POST and websockets)"
+  http.doc_root:
+    name: "Serve a website from the doc_root location"
+    description: "Disabled if empty, the default of '/usr/share/snapserver/snapweb' is a web-based snapserver controller"
+
+  tcp.enabled:
+    name: "Enable TCP Json RPC"
+
+  Logging.sink:
+    name: "Logging sink"
+
+  server.datadir:
+    name: "Directory where persistent data is stored"

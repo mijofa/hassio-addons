@@ -25,38 +25,33 @@ ports_description:
   1705/tcp: "Snapserver control endpoint"
   1780/tcp: "Snapweb json-RPC endpoint"
 schema:
-  stream:
-    sources: str
-    sampleformat: str
-    codec: str
-    chunk_ms: int
-    buffer: int
-    send_to_muted: bool
-  http:
-    enabled: bool
-    doc_root: str
-  tcp:
-    enabled: bool
-  logging:
-    logsink: list(null|system|stdout|stderr)
-  server:
-    threads: int
-    datadir: str
+  stream.sources:
+           - str
+  stream.sampleformat: str
+  stream.codec: str
+  stream.chunk_ms: int
+  stream.buffer: int
+  stream.send_to_muted: bool
+  http.enabled: bool
+  http.doc_root: str
+  tcp.enabled: bool
+  logging.logsink: list(null|system|stdout|stderr)
+  logging.filter: str
+  server.threads: int
+  server.datadir: str
 options:
-  stream:
-    sources: 'process:///usr/bin/snapclient?name=Snapclient&params=--host%20[UPSTREAM_SNAPSERVER]%20--player%20file:filename=stdout'
-    sampleformat: "48000:16:2"
-    codec: "flac"
-    chunk_ms: 20
-    buffer: 1000
-    send_to_muted: true
-  http:
-    enabled: true
-    doc_root: "/usr/share/snapserver/snapweb/"
-  tcp:
-    enabled: true
-  logging:
-    logsink: "stderr"
-  server:
-    threads: -1
-    datadir: "/share/snapcast/"
+  stream.sources:
+    - process:///usr/bin/snapclient?name=ch00&params=--host%20[UPSTREAM_SNAPSERVER]%20--player%20file:filename=stdout%20--hostID%20HA:0
+    - process:///usr/bin/snapclient?name=ch01&params=--host%20[UPSTREAM_SNAPSERVER]%20--player%20file:filename=stdout%20--hostID%20HA:1
+  stream.sampleformat: "48000:16:2"
+  stream.codec: "flac"
+  stream.chunk_ms: 20
+  stream.buffer: 1000
+  stream.send_to_muted: true
+  http.enabled: true
+  http.doc_root: "/usr/share/snapserver/snapweb/"
+  tcp.enabled: true
+  logging.logsink: "stderr"
+  logging.filter: "*:info"
+  server.threads: -1
+  server.datadir: "/share/snapcast/"
