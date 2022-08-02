@@ -23,37 +23,33 @@ ports_description:
   1705/tcp: "Snapserver control endpoint"
 schema:
   stream:
-    #    sources: list(str)
-    buffer: int
-    codec: str
-    send_to_muted: bool
+    sources: str
     sampleformat: str
+    codec: str
+    chunk_ms: int
+    buffer: int
+    send_to_muted: bool
   http:
     enabled: bool
     doc_root: str
   tcp:
     enabled: bool
-  logging :
-    enabled: bool
   server:
     threads: int
     datadir: str
-  upstream_snapserver: str
 options:
   stream:
-    streams: '["process:///usr/bin/snapclient?name=Snapclient&params=--host%20$UPSTREAM_SNAPSERVER%20--player%20file:filename=stdout"]'
-    buffer: 1000
-    codec: "flac"
-    send_to_muted: true
+    sources: 'process:///usr/bin/snapclient?name=Snapclient&params=--host%20[UPSTREAM_SNAPSERVER]%20--player%20file:filename=stdout'
     sampleformat: "48000:16:2"
+    codec: "flac"
+    chunk_ms: 20
+    buffer: 1000
+    send_to_muted: true
   http:
     enabled: true
     doc_root: "/usr/share/snapserver/snapweb/"
   tcp:
     enabled: true
-  logging:
-    enabled: true
   server:
     threads: -1
     datadir: "/share/snapcast/"
-  upstream_snapserver: "snapcastserver"

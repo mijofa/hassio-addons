@@ -42,7 +42,7 @@ echo "[tcp]" >> "${config}"
 echo "enabled = $(bashio::config 'tcp.enabled')" >> "${config}"
 
 echo "[logging]" >> "${config}"
-echo "debug = $(bashio::config 'logging.enabled')" >> "${config}"
+echo "logsink = stderr"
 
 echo "[server]" >> "${config}"
 echo "threads = $(bashio::config 'server.threads')" >> "${config}"
