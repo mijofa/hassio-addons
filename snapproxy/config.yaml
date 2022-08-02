@@ -1,7 +1,7 @@
-name: "snapcast-server"
-description: "Snapcast Server"
-version: "0.26"
-slug: "snapcastserver"
+name: "snapcast-proxy"
+description: "Snapcast Client & Server proxy"
+version: "0.27"
+slug: "snapcastproxy"
 init: false
 arch:
   - aarch64
@@ -35,12 +35,13 @@ schema:
   server:
     threads: int
     datadir: str
+  upstream_snapserver: str
 options:
   stream:
-    streams: '["pipe:///share/snapfifo/librespot?name=SpotifyConnect&sampleformat=44100:16:2", "pipe:///share/snapfifo/mopidy?name=Mopidy&sampleformat=44100:16:2", "tcp://0.0.0.0?port=4953&name=snapbroadcast"]'
+    streams: '["process:///usr/bin/snapclient?name=Snapclient&params=--host%20$UPSTREAM_SNAPSERVER%20--player%20file:filename=stdout"]'
     buffer: "1000"
     codec: "flac"
-    send_to_muted: 'false'
+    send_to_muted: 'true'
     sampleformat: "48000:16:2"
   http:
     enabled: 'true'
@@ -52,3 +53,4 @@ options:
   server:
     threads: "-1"
     datadir: "/share/snapcast/"
+  upstream_snapserver: "snapcastserver"
