@@ -13,11 +13,14 @@ startup: system
 boot: auto
 map:
   - share:rw
+ingress: true
+ingress_port: 1780
 ports:
   1704/tcp: 1704
   1705/tcp: 1705
-  1780/tcp: 1780
-  4953/tcp: 4953
+ports_description:
+  1704/tcp: "Snapserver stream endpoint"
+  1705/tcp: "Snapserver control endpoint"
 schema:
   stream:
     #    sources: list(str)
