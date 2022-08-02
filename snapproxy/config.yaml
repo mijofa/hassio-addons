@@ -15,12 +15,15 @@ map:
   - share:rw
 ingress: true
 ingress_port: 1780
+ingress_stream: true
 ports:
   1704/tcp: 1704
   1705/tcp: 1705
+  1780/tcp: 1780
 ports_description:
   1704/tcp: "Snapserver stream endpoint"
   1705/tcp: "Snapserver control endpoint"
+  1780/tcp: "Snapweb json-RPC endpoint"
 schema:
   stream:
     sources: str
@@ -34,6 +37,8 @@ schema:
     doc_root: str
   tcp:
     enabled: bool
+  logging:
+    logsink: list(null|system|stdout|stderr)
   server:
     threads: int
     datadir: str
@@ -50,6 +55,8 @@ options:
     doc_root: "/usr/share/snapserver/snapweb/"
   tcp:
     enabled: true
+  logging:
+    logsink: "stderr"
   server:
     threads: -1
     datadir: "/share/snapcast/"

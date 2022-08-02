@@ -1,8 +1,9 @@
+---
 configuration:
   stream:
     sources:
       name: "Snapserver sources"
-      description: "List of source URIs for snapserver streams"
+      description: "Space separated list of source URIs for snapserver streams (use %20 for spaces in the source)"
     sampleformat:
       name: "Default sample format"
     codec:

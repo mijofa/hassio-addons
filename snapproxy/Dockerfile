@@ -5,7 +5,7 @@ FROM $BUILD_FROM
 ENV LANG C.UTF-8
 
 #Install snapcast
-RUN apk add --no-cache snapcast-server snapcast-client
+RUN apk add --no-cache snapcast
 
 
 
