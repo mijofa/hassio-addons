@@ -15,7 +15,11 @@ map:
   - share:rw
 ingress: true
 ingress_port: 1780
+# FIXME: This depends on Nginx allowing websocket connections through to work with Ingress.
+#        I expected this ingress_stream option to fix that, but it didn't seem to have any effect.
 ingress_stream: true
+panel_icon: "mdi:speaker-wireless"
+panel_title: "Snapweb"
 ports:
   1704/tcp: 1704
   1705/tcp: 1705
