@@ -1,6 +1,6 @@
 name: "snapcast-proxy"
 description: "Snapcast Client & Server proxy"
-version: "0.29"
+version: "0.30"
 slug: "snapcastproxy"
 init: false
 arch:
@@ -25,33 +25,27 @@ ports_description:
   1705/tcp: "Snapserver control endpoint"
   1780/tcp: "Snapweb json-RPC endpoint"
 schema:
-  stream.sources:
-           - str
-  stream.sampleformat: str
-  stream.codec: str
-  stream.chunk_ms: int
-  stream.buffer: int
-  stream.send_to_muted: bool
-  http.enabled: bool
-  http.doc_root: str
-  tcp.enabled: bool
-  logging.logsink: list(null|system|stdout|stderr)
-  logging.filter: str
-  server.threads: int
-  server.datadir: str
+  stream_sources:
+    - str
+  stream_sampleformat: str
+  stream_codec: str
+  stream_chunk_ms: int
+  stream_buffer: int
+  stream_send_to_muted: bool
+  http_enabled: bool
+  tcp_enabled: bool
+  logging_filter: str
+  server_threads: int
+  server_datadir: str
 options:
-  stream.sources:
-    - process:///usr/bin/snapclient?name=ch00&params=--host%20[UPSTREAM_SNAPSERVER]%20--player%20file:filename=stdout%20--hostID%20HA:0
-    - process:///usr/bin/snapclient?name=ch01&params=--host%20[UPSTREAM_SNAPSERVER]%20--player%20file:filename=stdout%20--hostID%20HA:1
-  stream.sampleformat: "48000:16:2"
-  stream.codec: "flac"
-  stream.chunk_ms: 20
-  stream.buffer: 1000
-  stream.send_to_muted: true
-  http.enabled: true
-  http.doc_root: "/usr/share/snapserver/snapweb/"
-  tcp.enabled: true
-  logging.logsink: "stderr"
-  logging.filter: "*:info"
-  server.threads: -1
-  server.datadir: "/share/snapcast/"
+  stream_sources: null
+  stream_sampleformat: "48000:16:2"
+  stream_codec: "flac"
+  stream_chunk_ms: 20
+  stream_buffer: 1000
+  stream_send_to_muted: true
+  http_enabled: true
+  tcp_enabled: true
+  logging_filter: "*:info"
+  server_threads: -1
+  server_datadir: "/share/snapcast/"

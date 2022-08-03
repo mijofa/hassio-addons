@@ -1,40 +1,35 @@
 ---
 configuration:
-  stream.sources:
+  stream_sources:
     name: "Source URI"
     description: "List of source URIs for snapserver streams"
-  stream.sampleformat:
+  stream_sampleformat:
     name: "Default sample format"
-  stream.codec:
+  stream_codec:
     name: "Default transport codec"
-  stream.chunk_ms:
+  stream_chunk_ms:
     name: "Default source stream read chunk size [ms]"
-  stream.buffer:
-    name: "Buffer [ms]"
-  stream.send_to_muted:
+  stream_buffer:
+    name: "Stream buffer size [ms]"
+  stream_send_to_muted:
     name: "Send audio to muted clients"
 
-  server.threads:
+  server_threads:
     name: "Number of additional worker threads to use"
 
-  logging.filter:
+  logging_filter:
     name: "Log filter"
     description: >-
       <tag>:<level>[,<tag>:<level>]*
       With tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]
 
 # FIXME: Everything below this should just be set as is and not messed with I reckon
-  http.enabled:
-    name: "Enable HTTP Json RPC (HTTP POST and websockets)"
-  http.doc_root:
-    name: "Serve a website from the doc_root location"
-    description: "Disabled if empty, the default of '/usr/share/snapserver/snapweb' is a web-based snapserver controller"
+  http_enabled:
+    name: "Enable HTTP Json RPC"
+    description: "HTTP POST and websockets. (needed for the web client)"
 
-  tcp.enabled:
+  tcp_enabled:
     name: "Enable TCP Json RPC"
 
-  Logging.sink:
-    name: "Logging sink"
-
-  server.datadir:
+  server_datadir:
     name: "Directory where persistent data is stored"
