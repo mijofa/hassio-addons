@@ -5,13 +5,13 @@ FROM $BUILD_FROM
 ENV LANG C.UTF-8
 
 #Install snapcast
-RUN apk add --no-cache snapcast patch
+RUN apk add --no-cache snapcast patch pulseaudio-utils
 
 COPY snapjs.patch /
 RUN patch -p0 -i /snapjs.patch
 
-# Copy data for add-on
-COPY run.sh /
-RUN chmod a+x /run.sh
+# So COPY supports --chown, but not any sort of --mode argument?!?!?
+COPY run.sh /run.sh
+RUN chmod 555 /run.sh
 
 CMD [ "/run.sh" ]

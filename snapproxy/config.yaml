@@ -9,6 +9,9 @@ arch:
   - armhf
   - armv7
   - i386
+audio: true
+hassio_api: true
+hassio_role: manager  # Only needed to instruct HA to reload the audio config
 startup: system
 boot: auto
 map:
@@ -42,7 +45,8 @@ schema:
   server_threads: int
   server_datadir: str
 options:
-  stream_sources: null
+  stream_sources:
+    - pipe:///run/audio/snapfifo?sampleformat=48000:16:2&name=Pulseaudio
   stream_sampleformat: "48000:16:2"
   stream_codec: "flac"
   stream_chunk_ms: 20
