@@ -9,3 +9,10 @@ arch:
 #  - armhf
 #  - armv7
 #  - i386
+# Literally just put this here so that I can see if that creates a /data filesystem for me
+options:
+  foo:
+    bar: "baz"
+schema:
+  foo:
+    bar: str
