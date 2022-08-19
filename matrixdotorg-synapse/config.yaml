@@ -1,7 +1,7 @@
 name: "Matrix.org Synapse"
 description: "Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container"
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.1"
+version: "0.0.3"
 slug: "mijofa-matrixdotorg-synapse"
 arch:
 #  - aarch64
@@ -9,10 +9,54 @@ arch:
 #  - armhf
 #  - armv7
 #  - i386
-# Literally just put this here so that I can see if that creates a /data filesystem for me
+map:
+  # If SSL is enabled then we need access to the private keys
+  - ssl:ro
 options:
-  foo:
-    bar: "baz"
+  SYNAPSE_SERVER_NAME: null
+  SYNAPSE_REPORT_STATS: "no"
 schema:
-  foo:
-    bar: str
+  SYNAPSE_SERVER_NAME: str
+  SYNAPSE_REPORT_STATS: str
+  SYNAPSE_WORKER: str?
+  SYNAPSE_ENABLE_REGISTRATION: bool
+  SYNAPSE_HTTP_PORT: int?
+  SYNAPSE_EVENT_CACHE_SIZE: str?
+  SYNAPSE_MAX_UPLOAD_SIZE: str?
+  SYNAPSE_ALLOW_GUEST: bool?
+  SYNAPSE_LOG_LEVEL: str?
+  SYNAPSE_NO_TLS: bool
+
+# Mandatory config options:
+# * SYNAPSE_SERVER_NAME
+# * SYNAPSE_REPORT_STATS
+# Known optional config options:
+# * SYNAPSE_WORKER
+# * SYNAPSE_CONFIG_DIR  # Should stay with default /data
+# * SYNAPSE_CONFIG_PATH  # Should stay with default $SYNAPSE_CONFIG_DIR/homeserver.yaml
+# * SYNAPSE_DATA_DIR  # Should stay with default /data
+# * SYNAPSE_REGISTRATION_SHARED_SECRET  # DO NOT set this
+# * SYNAPSE_ENABLE_REGISTRATION  # DO set this
+# * SYNAPSE_MACAROON_SECRET_KEY  # DO NOT set this
+# * SYNAPSE_HTTP_PORT  # default 8008
+# * SYNAPSE_EVENT_CACHE_SIZE  # default '10K'
+# * SYNAPSE_MAX_UPLOAD_SIZE  # default '50M'
+# * SYNAPSE_ALLOW_GUEST  # default False
+# * SYNAPSE_LOG_LEVEL  # Beware of setting this to DEBUG as that will put sensitive info in the logs
+# * LOG_FILE_PATH  # Don't bother messing with this, the logs go out on the console anyway
+# * SYNAPSE_LOG_SENSITIVE  # DO NOT set this, it lets sensitive info get into the logs
+# * SYNAPSE_NO_TLS
+#   TLS requires symlinking "/data/{{ SYNAPSE_SERVER_NAME }}.tls.crt" to /ssl/fullchain.pem
+#                       and "/data/{{ SYNAPSE_SERVER_NAME }}.tls.key" to /ssl/privkey.pem
+# Recaptcha
+# * SYNAPSE_RECAPTCHA_PUBLIC_KEY
+# * SYNAPSE_RECAPTCHA_PRIVATE_KEY
+# TURN
+# * SYNAPSE_TURN_URIS
+# * SYNAPSE_TURN_SECRET
+# # Only for Postgres support
+# * POSTGRES_PASSWORD
+# * POSTGRES_USER  # default 'synapse'
+# * POSTGRES_DB  # default 'synapse'
+# * POSTGRES_HOST  # default 'db'
+# * POSTGRES_PORT  # default '5432'
