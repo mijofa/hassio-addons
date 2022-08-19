@@ -1,7 +1,7 @@
 name: "Matrix.org Synapse"
 description: "Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container"
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.3"
+version: "0.0.4"
 slug: "mijofa-matrixdotorg-synapse"
 arch:
 #  - aarch64
@@ -14,10 +14,14 @@ map:
   - ssl:ro
 options:
   SYNAPSE_SERVER_NAME: null
-  SYNAPSE_REPORT_STATS: "no"
+  SYNAPSE_REPORT_STATS: false
+
+  tls_certificate_path: "/ssl/fullchain.pem"
+  tls_private_key_path: "/ssl/privkey.pem"
+  signing_key_path: "/ssl/{SYNAPSE_SERVER_NAME}.signing.key"
 schema:
   SYNAPSE_SERVER_NAME: str
-  SYNAPSE_REPORT_STATS: str
+  SYNAPSE_REPORT_STATS: bool
   SYNAPSE_WORKER: str?
   SYNAPSE_ENABLE_REGISTRATION: bool
   SYNAPSE_HTTP_PORT: int?
@@ -26,6 +30,10 @@ schema:
   SYNAPSE_ALLOW_GUEST: bool?
   SYNAPSE_LOG_LEVEL: str?
   SYNAPSE_NO_TLS: bool
+
+  tls_certificate_path: str
+  tls_private_key_path: str
+  signing_key_path: str
 
 # Mandatory config options:
 # * SYNAPSE_SERVER_NAME
