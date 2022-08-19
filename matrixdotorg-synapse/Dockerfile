@@ -4,4 +4,5 @@ FROM matrixdotorg/synapse:latest
 # NOTE: Upstream's entrypoint is `["/start.py"]` so if I want to somehow inject Home Assistant's config in,
 #       I'd have a 'run.sh' or similar which will read Home Assistant's config, then call out to start.py at the end.
 # For testing purposes, I don't want it to actually run the start.sh yet
-ENTRYPOINT ["sleep", "infinity"]
+ENTRYPOINT ["sleep"]
+CMD ["17m"]
