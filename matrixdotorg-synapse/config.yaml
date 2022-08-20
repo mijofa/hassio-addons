@@ -1,7 +1,7 @@
 name: "Matrix.org Synapse"
 description: "Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container"
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.4"
+version: "0.0.5"
 slug: "mijofa-matrixdotorg-synapse"
 arch:
 #  - aarch64
@@ -15,6 +15,7 @@ map:
 options:
   SYNAPSE_SERVER_NAME: null
   SYNAPSE_REPORT_STATS: false
+  SYNAPSE_NO_TLS: false
 
   tls_certificate_path: "/ssl/fullchain.pem"
   tls_private_key_path: "/ssl/privkey.pem"

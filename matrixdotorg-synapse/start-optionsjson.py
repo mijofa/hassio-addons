@@ -3,6 +3,7 @@
 """Small wrapper for start.py to read from Home Assistant's /data/options.json instead of environment variables."""
 import json
 import pathlib
+import subprocess
 import sys
 
 import start  # Upstream's /start.py
@@ -35,6 +36,8 @@ for key in symlink_paths.keys():
         print('Symlinking', symlink_path, '->', symlink_dest)
         symlink_path.symlink_to(symlink_dest)
 
+env_opts['SYNAPSE_NO_TLS'] = env_opts.get('SYNAPSE_NO_TLS', False)
+
 # Turn all non-str options into strings.
 # Dropping that are false bools as we actually don't want those set at all.
 for key in list(env_opts.keys()):
@@ -45,15 +48,17 @@ for key in list(env_opts.keys()):
         else:
             env_opts[key] = "yes"
     elif env_opts[key] is False:
-        env_opts.pop(key)
+        env_opts[key] = "false"
     elif env_opts[key] is True:
         env_opts[key] = "true"
     elif type(env_opts[key]) != str:
         env_opts[key] = str(env_opts[key])
 
+print("CONFIG:", env_opts, file=sys.stderr, flush=True)
+env_opts['SYNAPSE_NO_TLS'] = 'false'
+
 if __name__ == "__main__":
-    if not CONFIG_FILE.exists() and not (len(sys.argv) > 1 and sys.argv[1] == "generate"):
-        print("Config file doesn't exist, generating")
-        start.main([sys.argv[0], 'generate'], env_opts)
+    print("Generating config file regardless of existing state")
+    subprocess.check_call([sys.executable, '/start.py', 'generate'], env=env_opts)
     print(sys.argv, env_opts)
     start.main(sys.argv, env_opts)

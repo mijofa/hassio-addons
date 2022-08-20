@@ -1,4 +1,4 @@
-FROM matrixdotorg/synapse:latest
+FROM matrixdotorg/synapse:v1.65.0
 # FIXME: I should probably target the specific current version rather than always "latest"
 
 COPY start-optionsjson.py /
