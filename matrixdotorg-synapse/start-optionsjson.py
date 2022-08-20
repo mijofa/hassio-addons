@@ -31,9 +31,9 @@ for key in symlink_paths.keys():
         if symlink_path.readlink().resolve() != symlink_dest.resolve():
             raise Exception(f"Symlink '{symlink_path}' already exists and doesn't match")
         else:
-            print('Skipping symlink', symlink_path, '->', symlink_dest)
+            print('Skipping symlink', symlink_path, '->', symlink_dest, file=sys.stderr, flush=True)
     else:
-        print('Symlinking', symlink_path, '->', symlink_dest)
+        print('Symlinking', symlink_path, '->', symlink_dest, file=sys.stderr, flush=True)
         symlink_path.symlink_to(symlink_dest)
 
 env_opts['SYNAPSE_NO_TLS'] = env_opts.get('SYNAPSE_NO_TLS', False)
@@ -58,7 +58,7 @@ print("CONFIG:", env_opts, file=sys.stderr, flush=True)
 env_opts['SYNAPSE_NO_TLS'] = 'false'
 
 if __name__ == "__main__":
-    print("Generating config file regardless of existing state")
+    print("Generating config file regardless of existing state", file=sys.stderr, flush=True)
     subprocess.check_call([sys.executable, '/start.py', 'generate'], env=env_opts)
-    print(sys.argv, env_opts)
+    print(sys.argv, env_opts, file=sys.stderr, flush=True)
     start.main(sys.argv, env_opts)
