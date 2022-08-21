@@ -1,7 +1,7 @@
 name: "Matrix.org Synapse"
 description: "Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container"
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.5"
+version: "0.0.6"
 slug: "mijofa-matrixdotorg-synapse"
 arch:
 #  - aarch64
@@ -12,30 +12,150 @@ arch:
 map:
   # If SSL is enabled then we need access to the private keys
   - ssl:ro
-options:
-  SYNAPSE_SERVER_NAME: null
-  SYNAPSE_REPORT_STATS: false
-  SYNAPSE_NO_TLS: false
-
-  tls_certificate_path: "/ssl/fullchain.pem"
-  tls_private_key_path: "/ssl/privkey.pem"
-  signing_key_path: "/ssl/{SYNAPSE_SERVER_NAME}.signing.key"
 schema:
-  SYNAPSE_SERVER_NAME: str
-  SYNAPSE_REPORT_STATS: bool
-  SYNAPSE_WORKER: str?
-  SYNAPSE_ENABLE_REGISTRATION: bool
-  SYNAPSE_HTTP_PORT: int?
-  SYNAPSE_EVENT_CACHE_SIZE: str?
-  SYNAPSE_MAX_UPLOAD_SIZE: str?
-  SYNAPSE_ALLOW_GUEST: bool?
-  SYNAPSE_LOG_LEVEL: str?
-  SYNAPSE_NO_TLS: bool
-
+  server_name: str
   tls_certificate_path: str
   tls_private_key_path: str
-  signing_key_path: str
+  homeserver.yaml: str
 
+  registration_shared_secret: password
+  macaroon_secret_key: password
+options:
+  server_name: null
+  tls_certificate_path: "/ssl/fullchain.pem"
+  tls_private_key_path: "/ssl/privkey.pem"
+
+  registration_shared_secret: null
+  macaroon_secret_key: null
+
+  homeserver.yaml: |
+    ### This is largely copied directly from the default /conf/homeserver.yaml template,
+    ## Server ##
+    server_name: {server_name}
+    pid_file: /homeserver.pid
+    web_client: False
+    soft_file_limit: 0
+    log_config: "/data/{server_name}.log.config"
+    
+    tls_certificate_path: "{tls_certificate_path}"
+    tls_private_key_path: "{tls_private_key_path}"
+    ## Ports ##
+    listeners:
+      - port: 8448
+        bind_addresses: ['::']
+        type: http
+        tls: true
+        x_forwarded: false
+        resources:
+          - names: [client]
+            compress: true
+          - names: [federation]  # Federation APIs
+            compress: false
+    #    # Allow configuring in case we want to reverse proxy 8008
+    #    # using another process in the same container
+    #    - port: 8008
+    #      tls: false
+    #      bind_addresses: ['::']
+    #      type: http
+    #      x_forwarded: false
+    #      resources:
+    #        - names: [client]
+    #          compress: true
+    #        - names: [federation]
+    #          compress: false
+    
+    ## Database ##
+    # database:
+    #   name: "psycopg2"
+    #   args:
+    #     user: "{{ POSTGRES_USER or "synapse" }}"
+    #     password: "{{ POSTGRES_PASSWORD }}"
+    #     database: "{{ POSTGRES_DB or "synapse" }}"
+    #     host: "{{ POSTGRES_HOST or "db" }}"
+    #     port: "{{ POSTGRES_PORT or "5432" }}"
+    #     cp_min: 5
+    #     cp_max: 10
+    database:
+      name: "sqlite3"
+      args:
+        database: "/data/homeserver.db"
+    
+    ## Performance ##
+    event_cache_size: "10K"
+    
+    ## Ratelimiting ##
+    rc_messages_per_second: 0.2
+    rc_message_burst_count: 10.0
+    federation_rc_window_size: 1000
+    federation_rc_sleep_limit: 10
+    federation_rc_sleep_delay: 500
+    federation_rc_reject_limit: 50
+    federation_rc_concurrent: 3
+    
+    ## Files ##
+    media_store_path: "/data/media"
+    max_upload_size: "50M"
+    max_image_pixels: "32M"
+    dynamic_thumbnails: false
+    # List of thumbnail to precalculate when an image is uploaded.
+    thumbnail_sizes:
+    - width: 32
+      height: 32
+      method: crop
+    - width: 96
+      height: 96
+      method: crop
+    - width: 320
+      height: 240
+      method: scale
+    - width: 640
+      height: 480
+      method: scale
+    - width: 800
+      height: 600
+      method: scale
+    url_preview_enabled: False
+    max_spider_size: "10M"
+    
+    ## Registration ##
+    enable_registration: False
+    registration_shared_secret: {registration_shared_secret}
+    bcrypt_rounds: 12
+    allow_guest_access: False
+    enable_group_creation: true
+    
+    ## Metrics ###
+    # enable_metrics: True
+    # report_stats: True
+    enable_metrics: False
+    report_stats: False
+    
+    ## API Configuration ##
+    # FIXME: Figure out a solution to this
+    # {{% if SYNAPSE_APPSERVICES %}}
+    # app_service_config_files:
+    # {{% for appservice in SYNAPSE_APPSERVICES %}}    - {{"appservice"}}
+    # {{% endfor %}}
+    # {{% endif %}}
+    # FIXME: 
+    macaroon_secret_key: {macaroon_secret_key}
+    expire_access_token: False
+    
+    ## Signing Keys ##
+    signing_key_path: "/ssl/{server_name}.signing.key"
+    old_signing_keys: {{}}
+    key_refresh_interval: "1d" # 1 Day.
+    
+    # The trusted servers to download signing keys from.
+    trusted_key_servers:
+      - server_name: matrix.org
+        verify_keys:
+          "ed25519:auto": "Noi6WqcDj0QmPxCNQqgezwTlBKrfqehY1u2FyWP9uYw"  # Public key, *not* a secret
+    
+    password_config:
+       enabled: true
+
+## Possible environment variables
 # Mandatory config options:
 # * SYNAPSE_SERVER_NAME
 # * SYNAPSE_REPORT_STATS
@@ -55,8 +175,6 @@ schema:
 # * LOG_FILE_PATH  # Don't bother messing with this, the logs go out on the console anyway
 # * SYNAPSE_LOG_SENSITIVE  # DO NOT set this, it lets sensitive info get into the logs
 # * SYNAPSE_NO_TLS
-#   TLS requires symlinking "/data/{{ SYNAPSE_SERVER_NAME }}.tls.crt" to /ssl/fullchain.pem
-#                       and "/data/{{ SYNAPSE_SERVER_NAME }}.tls.key" to /ssl/privkey.pem
 # Recaptcha
 # * SYNAPSE_RECAPTCHA_PUBLIC_KEY
 # * SYNAPSE_RECAPTCHA_PRIVATE_KEY

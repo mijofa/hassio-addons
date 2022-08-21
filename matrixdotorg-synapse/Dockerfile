@@ -1,9 +1,10 @@
 FROM matrixdotorg/synapse:v1.65.0
-# FIXME: I should probably target the specific current version rather than always "latest"
 
+# Upstream's entrypoint is `["/start.py"]` but I want to inject Home Assistant's config in before that,
+# so I have an alternative entrypoint which will call start.py itself
+
+# This is already installed as it's also a dependency of Synapse... Mentioning it here though so that future me remembers it's required by my startup script.
+#RUN apt install -y python3-yaml
 COPY start-optionsjson.py /
 
-# NOTE: Upstream's entrypoint is `["/start.py"]` so if I want to somehow inject Home Assistant's config in,
-#       I'd have a 'run.sh' or similar which will read Home Assistant's config, then call out to start.py at the end.
-# For testing purposes, I don't want it to actually run the start.sh yet
 ENTRYPOINT ["/start-optionsjson.py"]

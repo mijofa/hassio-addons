@@ -6,6 +6,8 @@ import pathlib
 import subprocess
 import sys
 
+# import yaml
+
 import start  # Upstream's /start.py
 
 OPTIONS_FILE = pathlib.Path('/data/options.json')
@@ -14,51 +16,29 @@ CONFIG_FILE = pathlib.Path('/data/homeserver.yaml')
 if not OPTIONS_FILE.exists():
     raise Exception("No /data/options.json file")
 
-# FIXME: Does the 'generate' path edit the environment at all?
-#        If so, this dict will be in an unpredictable state going back into the next main call
-env_opts = json.loads(OPTIONS_FILE.read_text())
+HA_options = json.loads(OPTIONS_FILE.read_text())
 
-# Create symlinks for SSL certs and such
-symlink_paths = {
-    'tls_certificate_path': '/data/{SYNAPSE_SERVER_NAME}.tls.crt'.format(**env_opts),
-    'tls_private_key_path': '/data/{SYNAPSE_SERVER_NAME}.tls.key'.format(**env_opts),
-    'signing_key_path': '/data/{SYNAPSE_SERVER_NAME}.signing.key'.format(**env_opts),
-}
-for key in symlink_paths.keys():
-    symlink_path = pathlib.Path(symlink_paths[key])
-    symlink_dest = pathlib.Path(env_opts.pop(key).format(**env_opts))
-    if symlink_path.exists():
-        if symlink_path.readlink().resolve() != symlink_dest.resolve():
-            raise Exception(f"Symlink '{symlink_path}' already exists and doesn't match")
-        else:
-            print('Skipping symlink', symlink_path, '->', symlink_dest, file=sys.stderr, flush=True)
-    else:
-        print('Symlinking', symlink_path, '->', symlink_dest, file=sys.stderr, flush=True)
-        symlink_path.symlink_to(symlink_dest)
+# internal_options = {}
+# for k in ['internally', 'used', 'keys', 'which', 'synapse', 'should not', 'see']:
+#     internal_options[k] = HA_options.pop(k)
 
-env_opts['SYNAPSE_NO_TLS'] = env_opts.get('SYNAPSE_NO_TLS', False)
+print(HA_options, file=sys.stderr, flush=True)
+# synapse_conf = yaml.dump(HA_options).format(**HA_options)
+# print(synapse_conf, file=sys.stderr, flush=True)
+synapse_conf = HA_options['homeserver.yaml'].format(**HA_options)
 
-# Turn all non-str options into strings.
-# Dropping that are false bools as we actually don't want those set at all.
-for key in list(env_opts.keys()):
-    if key == 'SYNAPSE_REPORT_STATS':
-        # This one's special because it's required but can be "no"
-        if env_opts[key] is False:
-            env_opts[key] = "no"
-        else:
-            env_opts[key] = "yes"
-    elif env_opts[key] is False:
-        env_opts[key] = "false"
-    elif env_opts[key] is True:
-        env_opts[key] = "true"
-    elif type(env_opts[key]) != str:
-        env_opts[key] = str(env_opts[key])
-
-print("CONFIG:", env_opts, file=sys.stderr, flush=True)
-env_opts['SYNAPSE_NO_TLS'] = 'false'
+# There's a few options that are usually passed as environment variables anyway,
+# I don't think they're required given I'm writing the config file myself, but it shouldn't hurt.
+env_opts = {'SYNAPSE_REPORT_STATS': "no",
+            'SYNAPSE_SERVER_NAME': HA_options['server_name']}
 
 if __name__ == "__main__":
-    print("Generating config file regardless of existing state", file=sys.stderr, flush=True)
-    subprocess.check_call([sys.executable, '/start.py', 'generate'], env=env_opts)
-    print(sys.argv, env_opts, file=sys.stderr, flush=True)
+    homeserver_yaml = pathlib.Path('/data/homeserver.yaml')
+    if not homeserver_yaml.exists():
+        print("Homeserver.yaml doesn't exist, pregenerating configs", file=sys.stderr, flush=True)
+        subprocess.check_call([sys.executable, '/start.py', 'generate'],
+                              env=env_opts)
+    print("Overwriting homeserver.yaml with custom config", file=sys.stderr, flush=True)
+    homeserver_yaml.write_text(synapse_conf)
+    print(sys.argv, file=sys.stderr, flush=True)
     start.main(sys.argv, env_opts)
