@@ -24,6 +24,7 @@ schema:
 
   registration_shared_secret: password?
   macaroon_secret_key: password?
+  postgress_password: password?
 
   homeserver.yaml: str
 options:
@@ -33,8 +34,9 @@ options:
 
   media_store_path: "/share/matrix_media"
 
-  registration_shared_secret: ""
-  macaroon_secret_key: ""
+  #registration_shared_secret: ""
+  #macaroon_secret_key: ""
+  #postgress_password: ""
 
   homeserver.yaml: |
     ### This is largely copied directly from the default /conf/homeserver.yaml template,
@@ -59,14 +61,19 @@ options:
             compress: false
 
     ## Database ##
+    # # Sample PostgreSQL config for use with https://github.com/Expaso/hassos-addons/tree/master/timescaledb
+    # # This requires manually creating the DB & user with something like this:
+    # # $ psql --user postgres -c "DO $$ begin IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'synapse') THEN RAISE NOTICE 'Synapse role already exists. Skipping.'; ELSE CREATE ROLE synapse WITH PASSWORD 'CorrectBatteryHorseStaple LOGIN CREATEDB'; END IF; end $$"
+    # # $ psql --user postgres -c "CREATE DATABASE synapse LOCALE = 'C' ENCODING = 'UTF8' TEMPLATE = 'template0' OWNER = 'synapse'"
     # database:
     #   name: "psycopg2"
     #   args:
-    #     user: "{{ POSTGRES_USER or "synapse" }}"
-    #     password: "{{ POSTGRES_PASSWORD }}"
-    #     database: "{{ POSTGRES_DB or "synapse" }}"
-    #     host: "{{ POSTGRES_HOST or "db" }}"
-    #     port: "{{ POSTGRES_PORT or "5432" }}"
+    #     user: "synapse"
+    #     password: "{postgres_password}"
+    #     # password: "CorrectBatteryHorseStaple"
+    #     database: "synapse"
+    #     host: "77b2833f-timescaledb"
+    #     port: 5432
     #     cp_min: 5
     #     cp_max: 10
     database:
