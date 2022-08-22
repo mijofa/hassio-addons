@@ -2,8 +2,8 @@ name: "Matrix.org Synapse"
 description: >-
   Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.7"
-slug: "mijofa-matrixdotorg-synapse"
+version: "0.0.8"
+slug: "matrixdotorg-synapse"
 arch:
   # - aarch64
   - amd64
