@@ -44,3 +44,22 @@ I'd recommend [NGINX Home Assistant SSL proxy](https://github.com/home-assistant
             client_max_body_size 50M;
         }
     }
+
+Postgres support requires a role & database be created in the SQL server first.
+I use the [TimescaleDB](https://github.com/Expaso/hassos-addon-timescaledb) addon with this config,
+but you could just as easily use an external PostgreSQL server:
+
+    # Requires manually creating the DB & user with something like this:
+    # $ psql --user postgres -c "DO $$ begin IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'synapse') THEN RAISE NOTICE 'Synapse role already exists. Skipping.'; ELSE CREATE ROLE synapse WITH PASSWORD 'CorrectBatteryHorseStaple LOGIN CREATEDB'; END IF; end $$"
+    # $ psql --user postgres -c "CREATE DATABASE synapse LOCALE = 'C' ENCODING = 'UTF8' TEMPLATE = 'template0' OWNER = 'synapse'"
+    database:
+      name: "psycopg2"
+      args:
+        user: "synapse"
+        password: "{postgres_password}"
+        # password: "CorrectBatteryHorseStaple"
+        database: "synapse"
+        host: "77b2833f-timescaledb"
+        port: 5432
+        cp_min: 5
+        cp_max: 10

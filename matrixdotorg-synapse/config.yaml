@@ -65,6 +65,7 @@ options:
             compress: false
 
     ## Database ##
+    # FIXME: Make start-optionsjson.py support a URL similar to how the mautrix-facebook appservice works
     # # Sample PostgreSQL config for use with https://github.com/Expaso/hassos-addons/tree/master/timescaledb
     # # This requires manually creating the DB & user with something like this:
     # # $ psql --user postgres -c "DO $$ begin IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'synapse') THEN RAISE NOTICE 'Synapse role already exists. Skipping.'; ELSE CREATE ROLE synapse WITH PASSWORD 'CorrectBatteryHorseStaple LOGIN CREATEDB'; END IF; end $$"

@@ -16,6 +16,7 @@ import start  # Upstream's /start.py
 OPTIONS_FILE = pathlib.Path('/data/options.json')
 CONFIG_FILE = pathlib.Path('/data/homeserver.yaml')
 APPSERVICE_REGISTRATIONS_DIR = pathlib.Path('/share/matrix_appservices/')
+HOMESERVER_YAML = pathlib.Path('/data/homeserver.yaml')
 
 if not OPTIONS_FILE.exists():
     raise Exception("No /data/options.json file")
@@ -26,11 +27,14 @@ HA_options = json.loads(OPTIONS_FILE.read_text())
 # for k in ['internally', 'used', 'keys', 'which', 'synapse', 'should not', 'see']:
 #     internal_options[k] = HA_options.pop(k)
 
-# FIXME: This will generate a new secret every single time.
-#        Perhaps we could leave it in a file next to homeserver.yaml for referencing next time.
+if HOMESERVER_YAML.exists():
+    old_homeserver_conf = yaml.safe_load(HOMESERVER_YAML.read_text())
+else:
+    old_homeserver_conf = {}
 for secret in ['registration_shared_secret', 'macaroon_secret_key']:
-    if not HA_options.get(secret):
-        HA_options[secret] = secrets.token_urlsafe()
+    HA_options[secret] = HA_options.get(secret,
+                                        old_homeserver_conf.get(secret,
+                                                                secrets.token_urlsafe()))
 
 # Reading this in as YAML to dump it back out is unnecessary, but doesn't hurt, and might make YAML syntax errors more obvious
 synapse_conf = yaml.safe_load(HA_options['homeserver.yaml'].format(**HA_options))
@@ -45,9 +49,8 @@ env_opts = {'SYNAPSE_REPORT_STATS': "no",
             'SYNAPSE_SERVER_NAME': HA_options['server_name']}
 
 if __name__ == "__main__":
-    homeserver_yaml = pathlib.Path('/data/homeserver.yaml')
     media_store_path = pathlib.Path(HA_options['media_store_path'])
-    if not homeserver_yaml.exists():
+    if not HOMESERVER_YAML.exists():
         print("Homeserver.yaml doesn't exist, pregenerating configs", flush=True)
         # I do this generate step not for homeserver.yaml, but because I know it does other things like log.config too.
         subprocess.check_call([sys.executable, '/start.py', 'generate'],
@@ -68,7 +71,7 @@ if __name__ == "__main__":
         # It can be overridden, but I think it has to be done with env vars, not homeserver.yaml.
         os.chown(media_store_path, 991, 991)
     print("Overwriting homeserver.yaml with custom config", flush=True)
-    homeserver_yaml.write_text(yaml.dump(synapse_conf))
+    HOMESERVER_YAML.write_text(yaml.dump(synapse_conf))
     print("Starting Synapse", flush=True)
     try:
         start.main(sys.argv, env_opts)
