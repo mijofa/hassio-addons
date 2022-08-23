@@ -15,6 +15,7 @@ import start  # Upstream's /start.py
 
 OPTIONS_FILE = pathlib.Path('/data/options.json')
 CONFIG_FILE = pathlib.Path('/data/homeserver.yaml')
+APPSERVICE_REGISTRATIONS_DIR = pathlib.Path('/share/matrix_appservices/')
 
 if not OPTIONS_FILE.exists():
     raise Exception("No /data/options.json file")
@@ -31,8 +32,12 @@ for secret in ['registration_shared_secret', 'macaroon_secret_key']:
     if not HA_options.get(secret):
         HA_options[secret] = secrets.token_urlsafe()
 
-# Reading this in as YAML to dump it back out is unnecessary, but does't hurt, and might YAML syntax make errors more obvious
+# Reading this in as YAML to dump it back out is unnecessary, but doesn't hurt, and might make YAML syntax errors more obvious
 synapse_conf = yaml.safe_load(HA_options['homeserver.yaml'].format(**HA_options))
+
+if HA_options['autofill_appservices'] and APPSERVICE_REGISTRATIONS_DIR.exists():
+    assert 'app_service_config_files' not in synapse_conf
+    synapse_conf['app_service_config_files'] = [str(appservice) for appservice in APPSERVICE_REGISTRATIONS_DIR.glob('*yaml')]
 
 # There's a few options that are usually passed as environment variables anyway,
 # I don't think they're required given I'm writing the config file myself, but it shouldn't hurt.

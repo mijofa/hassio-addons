@@ -6,6 +6,10 @@ I'd recommend `NGINX Home Assistant SSL proxy <https://github.com/home-assistant
     server {
         server_name matrix.example.net;
 
+        # Variable and resolver needed here so that Nginx doesn't refuse to start when it can't resolve this DNS name
+        resolver dns.local.hass.io valid=30s;
+        set $matrix_backend 674b3982-matrixdotorg-synapse:8008;
+
         listen 443 ssl http2;
         listen [::]:443 ssl http2;
     
@@ -30,7 +34,7 @@ I'd recommend `NGINX Home Assistant SSL proxy <https://github.com/home-assistant
             # note: do not add a path (even a single /) after the port in `proxy_pass`,
             # otherwise nginx will canonicalise the URI and cause signature verification
             # errors.
-            proxy_pass http://674b3982-mijofa-matrixdotorg-synapse:8008;
+            proxy_pass http://$matrix_backend;
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header Host $host;

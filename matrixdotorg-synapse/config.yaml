@@ -2,7 +2,7 @@ name: "Matrix.org Synapse"
 description: >-
   Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.8"
+version: "0.0.9"
 slug: "matrixdotorg-synapse"
 arch:
   # - aarch64
@@ -22,6 +22,8 @@ schema:
 
   media_store_path: str
 
+  autofill_appservices: bool
+
   registration_shared_secret: password?
   macaroon_secret_key: password?
   postgress_password: password?
@@ -33,6 +35,8 @@ options:
   default_userpass: "CorrectBatteryHorseStaple"
 
   media_store_path: "/share/matrix_media"
+
+  autofill_appservices: true
 
   #registration_shared_secret: ""
   #macaroon_secret_key: ""
@@ -132,12 +136,7 @@ options:
     report_stats: False
 
     ## API Configuration ##
-    # FIXME: Figure out a solution to this
-    # {{% if SYNAPSE_APPSERVICES %}}
-    # app_service_config_files:
-    # {{% for appservice in SYNAPSE_APPSERVICES %}}    - {{"appservice"}}
-    # {{% endfor %}}
-    # {{% endif %}}
+    # app_service_config_files: DO NOT SET. Use autofill_appservices instead
     # FIXME: What actually is this? Removing it doesn't make things crash, so I think just remove it.
     macaroon_secret_key: {macaroon_secret_key}
     expire_access_token: False
