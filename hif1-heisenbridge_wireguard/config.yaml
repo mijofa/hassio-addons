@@ -1,0 +1,34 @@
+name: "Matrix IRC bridge with Wireguard"
+description: >-
+  Pretty bare-bones add-on wrapper for the hif1/heisenbridge container which adds Wireguard support
+url: "https://github.com/hifi/heisenbridge"
+version: "0.0.1"
+slug: "hif1-heisenbridge_wireguard"
+arch:
+  # - aarch64
+  - amd64
+  # - armhf
+  # - armv7
+  # - i386
+
+# These are needed for Wireguard config
+privileged:
+  - NET_ADMIN
+devices:
+  - /dev/net/tun
+
+map:
+  # Move the appservice registration.yaml file here so that the synapse container can see it
+  - share:rw
+schema:
+  synapse_url: str
+  own_url: str
+  owner_mxid: str
+
+  wireguard.conf: str
+options:
+  synapse_url: https://matrix.example.net/
+  own_url: http://674b3982-hif1-heisenbridge-wireguard:9898/
+  owner_mxid: null
+
+  wireguard.conf: null
