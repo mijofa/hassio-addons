@@ -22,12 +22,16 @@ schema:
   synapse_url: str
   own_url: str
 
+  login_shared_secret: password
+
   config.yaml: str
 options:
   matrix_domain: null
   database_url: null
   synapse_url: http://674b3982-matrixdotorg-synapse:8008/
   own_url: http://674b3982-mautrix-facebook:29319/
+
+  login_shared_secret: ""
 
   config.yaml: |
     # Homeserver details
@@ -176,7 +180,7 @@ options:
         # If using this for other servers than the bridge's server,
         # you must also set the URL in the double_puppet_server_map.
         login_shared_secret_map:
-            example.com: foobar
+            {matrix_domain}: {login_shared_secret}
         # Should presence from Facebook be bridged? This doesn't use the same API as the Android app,
         # so it might be more suspicious to Facebook.
         presence_from_facebook: false
@@ -221,7 +225,7 @@ options:
             invite_own_puppet: true
             # Maximum number of messages to backfill initially.
             # Set to 0 to disable backfilling when creating portal.
-            initial_limit: 0
+            initial_limit: 100
             # Maximum number of messages to backfill if messages were missed while
             # the bridge was disconnected.
             # Set to 0 to disable backfilling missed messages.

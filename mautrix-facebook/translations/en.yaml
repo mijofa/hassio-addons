@@ -18,6 +18,10 @@ configuration:
   own_url:
     name: "The address that the homeserver can use to connect to this appservice."
 
+  login_shared_secret:
+    name: "Shared secret for use with matrix-synapse-shared-secret-auth."
+    description: "I recommend using a '!secret some_password' macro with secrets.yaml to easily integrate with other add-ons"
+
   config.yaml:
     name: "The appservice's config.yaml"
     description: "This is one big long string that is dropped straight into the config.yaml file. All other config options will be injected into this if the name of that config option enclosed in '{}'. If you want a literal {}, double them up like '{{}}'."

@@ -22,12 +22,16 @@ schema:
   synapse_url: str
   own_url: str
 
-  config.yaml: str?
+  login_shared_secret: password
+
+  config.yaml: str
 options:
   matrix_domain: null
   database_url: null
   synapse_url: http://674b3982-matrixdotorg-synapse:8008/
   own_url: http://674b3982-mautrix-googlechat:29320/
+
+  login_shared_secret: ""
 
   config.yaml: |
     # Homeserver details
@@ -155,7 +159,7 @@ options:
         # If using this for other servers than the bridge's server,
         # you must also set the URL in the double_puppet_server_map.
         login_shared_secret_map:
-            example.com: foobar
+            {matrix_domain}: {login_shared_secret}
         # Whether or not to update avatars when syncing all contacts at startup.
         update_avatar_initial_sync: true
         # End-to-bridge encryption support options.

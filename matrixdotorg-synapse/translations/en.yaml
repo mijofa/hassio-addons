@@ -24,7 +24,7 @@ configuration:
 
   shared_secret_auth:
     name: "Shared secret for use with matrix-synapse-shared-secret-auth."
-    description: "Leave blank to disable the module."
+    description: "I recommend using a '!secret some_password' macro with secrets.yaml to easily integrate with other add-ons"
 
   default_user:
     name: "Username for the default user generated on first startup"

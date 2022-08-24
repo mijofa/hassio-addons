@@ -77,7 +77,8 @@ if HA_options['shared_secret_auth']:
         synapse_conf['modules'] = []
 
     synapse_conf['modules'].append({'module': 'shared_secret_authenticator.SharedSecretAuthProvider',
-                                    'config': {'shared_secret': HA_options['shared_secret_auth']}})
+                                    'config': {'shared_secret': HA_options['shared_secret_auth'],
+                                               'm_login_password_support_enabled': True}})
 
 # There's a few options that are usually passed as environment variables anyway,
 # I don't think they're required for general use given I'm writing the config file myself, but it doesn't hurt.
