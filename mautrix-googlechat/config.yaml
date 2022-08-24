@@ -144,7 +144,7 @@ options:
         sync_direct_chat_list: false
         # Servers to always allow double puppeting from
         double_puppet_server_map:
-            {matrix_domain}: https://{matrix_domain}
+            {matrix_domain}: {synapse_url}
         # Allow using double puppeting from any server with a valid client .well-known file.
         double_puppet_allow_discovery: false
         # Shared secret for https://github.com/devture/matrix-synapse-shared-secret-auth
