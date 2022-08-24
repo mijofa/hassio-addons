@@ -22,6 +22,10 @@ configuration:
     name: "Autofill 'app_service_config_files' from /share/matrix_appservices/*yaml?"
     description: "This allows other add-ons to drop their registration.yaml files into /share/matrix_appservices/ for Synapse to automatically register on startup."
 
+  shared_secret_auth:
+    name: "Shared secret for use with matrix-synapse-shared-secret-auth."
+    description: "Leave blank to disable the module."
+
   default_user:
     name: "Username for the default user generated on first startup"
     description: "Ignored after first run"

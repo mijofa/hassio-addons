@@ -2,7 +2,7 @@ name: "Matrix.org Synapse"
 description: >-
   Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.11"
+version: "0.0.12"
 slug: "matrixdotorg-synapse"
 ingress: true
 ingress_port: 8008
@@ -27,6 +27,7 @@ schema:
   public_baseurl: url
   database_url: url
   autofill_appservices: bool
+  shared_secret_auth: password?
   default_user: str?
   default_userpass: password?
 
@@ -49,6 +50,8 @@ options:
   #      psql --host=77b2833f-timescaledb --user postgres -c  "CREATE DATABASE synapse LOCALE = 'C' ENCODING = 'UTF8' TEMPLATE = 'template0' OWNER = 'synapse'"
 
   autofill_appservices: true
+
+  shared_secret_auth: ""
 
   default_user: null
   default_userpass: "CorrectBatteryHorseStaple"
