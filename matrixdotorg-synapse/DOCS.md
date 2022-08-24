@@ -14,6 +14,7 @@ I'd recommend [NGINX Home Assistant SSL proxy](https://github.com/home-assistant
         listen [::]:443 ssl http2;
 
         # For the federation port
+        ## I don't think this actually works because 8448 is not sent to the Nginx Docker instance
         listen 8448 ssl http2 default_server;
         listen [::]:8448 ssl http2 default_server;
 
@@ -49,17 +50,10 @@ Postgres support requires a role & database be created in the SQL server first.
 I use the [TimescaleDB](https://github.com/Expaso/hassos-addon-timescaledb) addon with this config,
 but you could just as easily use an external PostgreSQL server:
 
-    # Requires manually creating the DB & user with something like this:
-    # $ psql --user postgres -c "DO $$ begin IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'synapse') THEN RAISE NOTICE 'Synapse role already exists. Skipping.'; ELSE CREATE ROLE synapse WITH PASSWORD 'CorrectBatteryHorseStaple LOGIN CREATEDB'; END IF; end $$"
-    # $ psql --user postgres -c "CREATE DATABASE synapse LOCALE = 'C' ENCODING = 'UTF8' TEMPLATE = 'template0' OWNER = 'synapse'"
-    database:
-      name: "psycopg2"
-      args:
-        user: "synapse"
-        password: "{postgres_password}"
-        # password: "CorrectBatteryHorseStaple"
-        database: "synapse"
-        host: "77b2833f-timescaledb"
-        port: 5432
-        cp_min: 5
-        cp_max: 10
+    database_url: postgres://synapse:CorrectBatteryHorseStaple@77b2833f-timescaledb/synapse?cp_min=5&cp_max=10
+
+Requires manually creating the DB & user, which I did from the SSH & Terminal addon with this:
+
+    apk add postgresql14-client
+    psql --host=77b2833f-timescaledb --user postgres -c "DO \$\$ begin IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'synapse') THEN RAISE NOTICE 'Synapse role already exists. Skipping.'; ELSE CREATE ROLE synapse WITH PASSWORD 'CorrectBatteryHorseStaple' LOGIN; END IF; end \$\$"
+    psql --host=77b2833f-timescaledb --user postgres -c  "CREATE DATABASE synapse LOCALE = 'C' ENCODING = 'UTF8' TEMPLATE = 'template0' OWNER = 'synapse'"

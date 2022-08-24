@@ -2,8 +2,15 @@ name: "Matrix.org Synapse"
 description: >-
   Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.10"
+version: "0.0.11"
 slug: "matrixdotorg-synapse"
+ingress: true
+ingress_port: 8008
+ingress_entry: _matrix/static/
+ingress_stream: true
+panel_icon: mdi:forum
+panel_title: Matrix
+watchdog: http://[HOST]:8008/_matrix/client/versions
 arch:
   # - aarch64
   - amd64
@@ -17,13 +24,13 @@ map:
   - share:rw
 schema:
   server_name: str
+  public_baseurl: url
+  database_url: url
+  autofill_appservices: bool
   default_user: str
   default_userpass: password
 
-  database_url: url
-  media_store_path: str
-
-  autofill_appservices: bool
+  media_store_path: str?
 
   registration_shared_secret: password?
   macaroon_secret_key: password?
@@ -31,8 +38,7 @@ schema:
   homeserver.yaml: str
 options:
   server_name: null
-  default_user: null
-  default_userpass: "CorrectBatteryHorseStaple"
+  public_baseurl: null
 
   database_url: 'sqlite:///data/homeserver.db'
   # Sample for postgres use with TimescaleDB add-on from https://github.com/Expaso/hassos-addons/tree/master/timescaledb:
@@ -41,9 +47,14 @@ options:
   #      apk add postgresql14-client
   #      psql --host=77b2833f-timescaledb --user postgres -c "DO \$\$ begin IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'synapse') THEN RAISE NOTICE 'Synapse role already exists. Skipping.'; ELSE CREATE ROLE synapse WITH PASSWORD 'CorrectBatteryHorseStaple' LOGIN; END IF; end \$\$"
   #      psql --host=77b2833f-timescaledb --user postgres -c  "CREATE DATABASE synapse LOCALE = 'C' ENCODING = 'UTF8' TEMPLATE = 'template0' OWNER = 'synapse'"
-  media_store_path: "/share/matrix_media"
 
   autofill_appservices: true
+
+  default_user: null
+  default_userpass: "CorrectBatteryHorseStaple"
+
+  media_store_path: "/share/matrix_media"
+
 
   #registration_shared_secret: ""
   #macaroon_secret_key: ""
@@ -56,6 +67,8 @@ options:
     web_client: False
     soft_file_limit: 0
     log_config: "/data/{server_name}.log.config"
+    public_baseurl: {public_baseurl}
+    serve_server_wellknown: true
 
     ## Ports ##
     listeners:

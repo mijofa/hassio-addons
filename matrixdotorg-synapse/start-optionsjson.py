@@ -16,8 +16,9 @@ import start  # Upstream's /start.py
 
 OPTIONS_FILE = pathlib.Path('/data/options.json')
 CONFIG_FILE = pathlib.Path('/data/homeserver.yaml')
-APPSERVICE_REGISTRATIONS_DIR = pathlib.Path('/share/matrix_appservices/')
+APPSERVICE_REGISTRATIONS_DIR = pathlib.Path('/share/matrix_appservices/')  # FIXME: Should this be configurable?
 HOMESERVER_YAML = pathlib.Path('/data/homeserver.yaml')
+ELEMENT_CONFIG_JSON = pathlib.Path('/usr/local/lib/python3.9/site-packages/synapse/static/config.json')
 
 
 def parse_dburl(url: str):
@@ -99,6 +100,25 @@ if __name__ == "__main__":
         # 901 is the magic uid/gid that synapse runs as by default.
         # It can be overridden, but I think it has to be done with env vars, not homeserver.yaml.
         os.chown(media_store_path, 991, 991)
+
+    # Set default config for local instance of element-web
+    if ELEMENT_CONFIG_JSON.exists():
+        element_options = json.load(ELEMENT_CONFIG_JSON.open('r'))
+    else:
+        element_options = json.load(ELEMENT_CONFIG_JSON.with_suffix('.sample' + ELEMENT_CONFIG_JSON.suffix).open('r'))
+
+    element_options['default_server_config']['m.homeserver'].update({
+        'base_url': HA_options['public_baseurl'],
+        'server_name': HA_options['server_name'],
+    })
+    element_options.update({
+        'default_device_display_name': "Home Assistant Ingress",  # Necessary to avoid "400 - Device display name is too long"
+        'disable_3pid_login': True,
+        'disable_guests': True,
+        'disable_custom_urls': True,
+    })
+    json.dump(element_options, ELEMENT_CONFIG_JSON.open('w'))
+
     print("Overwriting homeserver.yaml with custom config", flush=True)
     HOMESERVER_YAML.write_text(yaml.dump(synapse_conf))
     print("Starting Synapse", flush=True)
