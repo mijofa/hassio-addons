@@ -10,6 +10,7 @@ import sys
 import yaml
 
 OPTIONS_FILE = pathlib.Path('/data/options.json')
+WIREGUARD_CONF = pathlib.Path('/etc/wireguard/wg0.conf')
 REGISTRATION_FILE = pathlib.Path('/share/matrix_appservices/hif1-heisenbridge_wireguard.yaml')
 
 if not OPTIONS_FILE.exists():
@@ -17,7 +18,9 @@ if not OPTIONS_FILE.exists():
 
 HA_options = json.loads(OPTIONS_FILE.read_text())
 
-heisenbridge_args = ['--config', str(REGISTRATION_FILE), '--owner', HA_options['owner_mxid'], HA_options['synapse_url']]
+# FIXME: Don't listen on the VPN IP address.
+heisenbridge_args = ['--config', str(REGISTRATION_FILE), '--listen-address', '0.0.0.0',
+                     '--owner', HA_options['owner_mxid'], HA_options['synapse_url']]
 
 if __name__ == "__main__":
     # Generate registration.yaml if it doesn't already exist
@@ -28,4 +31,12 @@ if __name__ == "__main__":
         registration_yaml['url'] = HA_options['own_url']
         REGISTRATION_FILE.write_text(yaml.dump(registration_yaml))
 
+    if HA_options['wireguard.conf']:
+        print('Starting Wireguard interface.', flush=True)
+        WIREGUARD_CONF.write_text(HA_options['wireguard.conf'])
+        subprocess.check_call(['wg-quick', 'up', 'wg0'])
+
+    print('Got IP addresses;', flush=True)
+    subprocess.check_call(['ip', '-oneline', 'address'])
+    print('Starting Heisenbridge with command:', ['heisenbridge', *heisenbridge_args, *sys.argv[1:]], flush=True)
     subprocess.check_call(['heisenbridge', *heisenbridge_args, *sys.argv[1:]])

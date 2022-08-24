@@ -1,4 +1,4 @@
-name: "Matrix IRC bridge with Wireguard"
+name: "Matrix Heisenbridge with Wireguard"
 description: >-
   Pretty bare-bones add-on wrapper for the hif1/heisenbridge container which adds Wireguard support
 url: "https://github.com/hifi/heisenbridge"

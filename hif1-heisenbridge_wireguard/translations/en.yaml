@@ -12,4 +12,4 @@ configuration:
 
   wireguard.conf:
     name: "The wireguard connection config."
-    description: "This is one big long string that is dropped straight into the wg-quick config file."
+    description: "Does *NOT* support '[Interface] DNS'"
