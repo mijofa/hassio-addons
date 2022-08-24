@@ -1,0 +1,23 @@
+---
+configuration:
+  matrix_domain:
+    name: "Public-facing domain of the Matrix server"
+    description: "Should match Synapse's server_name"
+
+  database_url:
+    name: "The full URI to the database."
+    description: |
+      SQLite and Postgres are supported.
+      Format examples:
+        SQLite:   sqlite:///filename.db
+        Postgres: postgres://username:password@hostname/dbname
+
+  synapse_url:
+    name: "The address that this appservice can use to connect to the homeserver."
+
+  own_url:
+    name: "The address that the homeserver can use to connect to this appservice."
+
+  config.yaml:
+    name: "The appservice's config.yaml"
+    description: "This is one big long string that is dropped straight into the config.yaml file. All other config options will be injected into this if the name of that config option enclosed in '{}'. If you want a literal {}, double them up like '{{}}'."

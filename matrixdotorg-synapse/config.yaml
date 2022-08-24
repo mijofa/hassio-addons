@@ -27,8 +27,8 @@ schema:
   public_baseurl: url
   database_url: url
   autofill_appservices: bool
-  default_user: str
-  default_userpass: password
+  default_user: str?
+  default_userpass: password?
 
   media_store_path: str?
 

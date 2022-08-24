@@ -1,0 +1,47 @@
+---
+configuration:
+  server_name:
+    name: "Public-facing domain of the server"
+    description: "This is required even if you write the homeserver.yaml by hand as it's used by other internal things."
+
+  public_baseurl:
+    name: "The public-facing base URL that clients use to access this Homeserver"
+    description: "This is required even if you write the homeserver.yaml by hand as it's used by other internal things."
+
+  database_url:
+    name: "URL for the database to use"
+    description: |
+      Only supports sqlite or postrgres. If using sqlite, make sure the db file is in /data or /share.
+
+      sqlite example: sqlite:///data/homeserver.db
+      postgres example: postgres://synapse:CorrectBatteryHorseStaple@77b2833f-timescaledb/synapse?cp_min=5&cp_max=10
+
+      Postgres requires that the user & DB already be created before *first* start.
+
+  autofill_appservices:
+    name: "Autofill 'app_service_config_files' from /share/matrix_appservices/*yaml?"
+    description: "This allows other add-ons to drop their registration.yaml files into /share/matrix_appservices/ for Synapse to automatically register on startup."
+
+  default_user:
+    name: "Username for the default user generated on first startup"
+    description: "Ignored after first run"
+
+  default_userpass:
+    name: "Password for the default user generated on first startup"
+    description: "You should change this password inside Matrix afterwards and never keep a real password store in plain-text here, this config option is only really here so you can see what it was initially set to."
+
+  media_store_path:
+    name: "Location where shared media is stored"
+    description: "This should only go in /share or /data"
+
+  registration_shared_secret:
+    name: "Registration secret key. Auto generated if left out"
+    description: "Registration is left off in the default config, so this should be unnecessary, but maybe you want to turn that on."
+
+  macaroon_secret_key:
+    name: "Macaroon secret key. Auto generated if left out"
+    description: "I don't actually know what this is for, but I don't want to store secrets in the homeserver.yaml string directly."
+
+  homeserver.yaml:
+    name: "The homeserver.yaml itself"
+    description: "This is one big long string that is dropped straight into the homeserver.yaml file. All other config options will be injected into this if the name of that config options enclosed in '{}'. If you want a literal {}, double them up like '{{}}'."
