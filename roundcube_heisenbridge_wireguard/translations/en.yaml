@@ -5,7 +5,7 @@ configuration:
     description: "or first talking local user will claim the bridge"
 
   synapse_url:
-    name: "The homeserver's publicly accessible URL."
+    name: "The URL this appservice should use to connect to the homeserver."
 
   own_url:
     name: "The address that the homeserver can use to connect to this appservice."

@@ -1,9 +1,17 @@
-name: "Matrix Heisenbridge with Wireguard"
+name: "Matrix Heisenbridge, Roundcube, and Wireguard"
 description: >-
-  Pretty bare-bones add-on wrapper for the hif1/heisenbridge container which adds Wireguard support
-url: "https://github.com/hifi/heisenbridge"
+  Wrapper for the official Roundcube container to include the Heisenbridge Matrix IRC bridge, with Wireguard support for work's VPN
+url: "https://github.com/mijofa/hassio-addons/roundcube_heisenbridge_wireguard"
 version: "0.0.1"
-slug: "hif1-heisenbridge_wireguard"
+slug: "roundcube_heisenbridge_wireguard"
+ingress: true
+ingress_port: 80
+# ingress_entry:
+ingress_stream: true
+panel_icon: mdi:email-multiple
+# panel_icon: mdi:mailbox
+# panel_icon: mdi:at
+panel_title: Email
 arch:
   # - aarch64
   - amd64
@@ -21,14 +29,51 @@ map:
   # Move the appservice registration.yaml file here so that the synapse container can see it
   - share:rw
 schema:
-  synapse_url: str
-  own_url: str
-  owner_mxid: str
+  heisenbridge:
+    synapse_url: str
+    own_url: str
+    owner_mxid: str
 
-  wireguard.conf: str
+  wireguard:
+    own_IP: str
+    private_key: password
+
+    endpoint: str
+    public_key: str
+    allowed_IPs: str
+
+  roundcube:
+    database_url: str?
+    ROUNDCUBEMAIL_DEFAULT_HOST: str?
+    ROUNDCUBEMAIL_DEFAULT_PORT: str?
+    ROUNDCUBEMAIL_SMTP_SERVER: str?
+    ROUNDCUBEMAIL_SMTP_PORT: str?
+    ROUNDCUBEMAIL_PLUGINS: str?
+    ROUNDCUBEMAIL_SKIN: str?
+    ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: str?
+    ROUNDCUBEMAIL_SPELLCHECK_URI: str?
+    ROUNDCUBEMAIL_ASPELL_DICTS: str?
 options:
-  synapse_url: https://matrix.example.net/
-  own_url: http://674b3982-hif1-heisenbridge-wireguard:9898/
-  owner_mxid: null
+  heisenbridge:
+    synapse_url: null
+    own_url: http://674b3982-roundcube-heisenbridge-wireguard:9898/
+    owner_mxid: null
 
-  wireguard.conf: null
+  wireguard:
+    own_IP: null
+    private_key: null
+    endpoint: null
+    public_key: null
+    allowed_IPs: null
+
+  roundcube:
+    database_url: ""
+    ROUNDCUBEMAIL_DEFAULT_HOST: ""
+    ROUNDCUBEMAIL_DEFAULT_PORT: ""
+    ROUNDCUBEMAIL_SMTP_SERVER: ""
+    ROUNDCUBEMAIL_SMTP_PORT: ""
+    ROUNDCUBEMAIL_PLUGINS: ""
+    ROUNDCUBEMAIL_SKIN: ""
+    ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: ""
+    ROUNDCUBEMAIL_SPELLCHECK_URI: ""
+    ROUNDCUBEMAIL_ASPELL_DICTS: ""
