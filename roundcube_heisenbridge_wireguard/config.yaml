@@ -6,7 +6,7 @@ version: "0.0.1"
 slug: "roundcube_heisenbridge_wireguard"
 ingress: true
 ingress_port: 80
-# ingress_entry:
+ingress_entry: index.php
 ingress_stream: true
 panel_icon: mdi:email-multiple
 # panel_icon: mdi:mailbox

@@ -6,7 +6,8 @@ import pathlib
 # import secrets
 import subprocess
 import sys
-import urllib
+import urllib.parse
+import urllib.request
 
 import yaml
 
