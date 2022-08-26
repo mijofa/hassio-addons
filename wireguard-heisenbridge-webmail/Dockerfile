@@ -9,7 +9,6 @@ RUN apt update && \
     DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends neomutt && \
     usermod --home /data nobody  # I want to run mutt as 'nobody', but it needs a $HOME for mutt to store state and such
 
-
 # ttyd's ENTRYPOINT is ['/usr/bin/tini', '--'] with a CMD of ['ttyd', 'bash']
 # I don't care about tini, and I'm running ttyd myself in the start-optionsjson.py
 COPY start-optionsjson.py /

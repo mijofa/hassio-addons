@@ -2,7 +2,7 @@ name: "Matrix Heisenbridge & Webmail, with Wireguard"
 description: >-
   Wireguard, IRC bridge for Matrix, and webmail. Intended for use with work's VPN to assist with work communications
 url: "https://github.com/mijofa/hassio-addons/wireguard_heisenbridge_webmail"
-version: "0.0.1"
+version: "0.1.0"
 slug: "wireguard_heisenbridge_webmail"
 ingress: true
 # ingress_port: 80
@@ -11,7 +11,7 @@ ingress_stream: true
 panel_icon: mdi:email-multiple
 # panel_icon: mdi:mailbox
 # panel_icon: mdi:at
-panel_title: Email
+panel_title: Email (work/VPN)
 arch:
   # - aarch64
   - amd64
@@ -52,4 +52,54 @@ options:
   wireguard_public_key: null
   wireguard_allowed_IPs: null
 
-  muttrc: []
+  muttrc:
+    ## Simply what I personally decided are sensible defaults
+    # Put cache in /data
+    - set header_cache     = /data/.cache/
+    - set message_cachedir = /data/.cache/
+    # This is the most reliable header when you have multiple external aliases and mailing lists.
+    - unignore Delivered-To
+    # Set my From: header if the received email was sent To one of my alternate addresses
+    # FIXME: Requires "alternates". Should that be an option in the Home Assistant schema?
+    - set reverse_name
+    # "send as attachment?" when forwarding email
+    - set mime_forward=ask-yes
+    # Do IMAP a bit more usefully
+    - set imap_idle = yes
+    - set imap_keepalive   = 120
+    - set imap_check_subscribed = yes
+    - set imap_list_subscribed  = no
+    - set spoolfile = =INBOX
+    - set mbox      = =Read
+    - set record    = =Sent
+    - set postponed = =Draft
+    - set trash     = =Trash
+    # Don't just quit because I pressed 'Q' too many times
+    - set quit=ask-yes
+    # The default colours are ugly, especially with regards to the sidebar
+    - color quoted brightblue default
+    - color quoted1 brightcyan default
+    - color quoted2 brightgreen default
+    - color quoted3 brightyellow default
+    - color quoted4 brightred default
+    - color quoted5 brightmagenta default
+    - color quoted6 brightwhite default
+    - color quoted7 brightblack default
+    - color sidebar_divider green blue
+    - color sidebar_highlight black blue
+    # Get a little more info when polling mailboxes (so that the sidebar will render that info)
+    - set mail_check_stats
+    # Display the side bar and make it more useful.
+    - set sidebar_visible=yes
+    - set sidebar_sort_method=path
+    - set sidebar_format="%B%*  %L%?N?(%N)?%?F?[%F]?"
+    - set sidebar_short_path=yes
+    - set sidebar_delim_chars="/"
+    - set sidebar_folder_indent=yes
+    - set sidebar_indent_string=' '
+    - set sidebar_width=20
+    # Why the fuck doesn't the sidebar have some keybindings by default?
+    - bind index,pager "\e\cj" sidebar-next
+    - bind index,pager "\e\ck" sidebar-prev
+    - bind index,pager "\e\co" sidebar-open
+    - bind index,pager "\e\cs" sidebar-toggle-visible

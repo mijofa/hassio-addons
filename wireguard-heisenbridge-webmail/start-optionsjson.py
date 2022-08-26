@@ -63,10 +63,12 @@ if __name__ == "__main__":
         print('Starting Heisenbridge with command:', ['heisenbridge', *heisenbridge_args], flush=True)
         heisenbridge = subprocess.Popen(['heisenbridge', *heisenbridge_args])
 
-        ttyd_mutt_args = ['runuser', '--user=nobody', '--', 'ttyd', '--port', '8099', '--interface', ttyd_nic,
+        # NOTE: 65534 = nobody/nogroup
+        ttyd_mutt_args = ['ttyd', '--port', '8099', '--interface', ttyd_nic,
+                          '--uid', '65534', '--gid', '65534', '--cwd', '/data',
                           'neomutt', '-F', str(MUTTRC_PATH)]
         print('Starting ttyd with command:', ttyd_mutt_args, flush=True)
-        ttyd_mutt = subprocess.Popen(ttyd_mutt_args)
+        ttyd_mutt = subprocess.Popen(ttyd_mutt_args, env={**os.environ, 'HOME': '/data'})
 
         crashed = False
         while crashed is False:
