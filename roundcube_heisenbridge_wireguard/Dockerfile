@@ -9,7 +9,10 @@ RUN rmdir /var/roundcube/config && ln -s /data/config /var/roundcube/config && l
 # These 2 things conflict and break everything.
 # Ingress does helplfully include an X-Ingress-Path header though, so let's trick the PHP parts into adding that to the request URI.
 RUN echo 'auto_prepend_file=/usr/local/etc/php/ingress-fix-prepend.php' >/usr/local/etc/php/conf.d/ingress-fix.ini && \
-    echo '<?php $_SERVER["REQUEST_URI"] = $_SERVER["HTTP_X_INGRESS_PATH"] . $_SERVER["REQUEST_URI"];' >/usr/local/etc/php/ingress-fix-prepend.php 
+    printf '%s\n' >/usr/local/etc/php/ingress-fix-prepend.php \
+        '<?php if (isset($_SERVER["REQUEST_URI"]) AND isset($_SERVER["HTTP_X_INGRESS_PATH"])) {' \
+        '    $_SERVER["REQUEST_URI"] = $_SERVER["HTTP_X_INGRESS_PATH"] . $_SERVER["REQUEST_URI"];' \
+        '}'
 
 # Roundcube's ENTRYPOINT is `ENTRYPOINT ["/docker-entrypoint.sh"]` with a CMD of `CMD ["apache2-foreground"]`
 # Note I *also* want to run Heisenbridge.

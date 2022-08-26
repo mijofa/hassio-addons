@@ -86,7 +86,7 @@ if __name__ == "__main__":
     heisenbridge = subprocess.Popen(['heisenbridge', *heisenbridge_args])
     roundcube_args = ["/docker-entrypoint.sh", sys.argv[1] if len(sys.argv) >= 2 else "apache2-foreground", *sys.argv[2:]]
     print('Starting Roundcube with command:', roundcube_args, flush=True)
-    roundcube = subprocess.Popen(roundcube_args, env=roundcube_env)
+    roundcube = subprocess.Popen(roundcube_args, env={**os.environ, **roundcube_env})
 
     crashed = False
     while crashed is False:
