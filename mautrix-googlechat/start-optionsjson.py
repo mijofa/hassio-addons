@@ -43,7 +43,7 @@ if __name__ == "__main__":
             REGISTRATIONS_DIR.mkdir()
 
         # FIXME: Should I be regularly updating this?
-        (REGISTRATIONS_DIR / 'mautrix-googlechart.yaml').write_text(REGISTRATION_FILE.read_text())
+        (REGISTRATIONS_DIR / 'mautrix-googlechat.yaml').write_text(REGISTRATION_FILE.read_text())
         print("Appservice registration yaml generated, go sort out registration before restarting this addon.",
               file=sys.stderr, flush=True)
     else:
