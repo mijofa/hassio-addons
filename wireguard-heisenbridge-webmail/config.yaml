@@ -1,12 +1,12 @@
-name: "Matrix Heisenbridge, Roundcube, and Wireguard"
+name: "Matrix Heisenbridge & Webmail, with Wireguard"
 description: >-
-  Wrapper for the official Roundcube container to include the Heisenbridge Matrix IRC bridge, with Wireguard support for work's VPN
-url: "https://github.com/mijofa/hassio-addons/roundcube_heisenbridge_wireguard"
+  Wireguard, IRC bridge for Matrix, and webmail. Intended for use with work's VPN to assist with work communications
+url: "https://github.com/mijofa/hassio-addons/wireguard_heisenbridge_webmail"
 version: "0.0.1"
-slug: "roundcube_heisenbridge_wireguard"
+slug: "wireguard_heisenbridge_webmail"
 ingress: true
-ingress_port: 80
-ingress_entry: index.php
+# ingress_port: 80
+# ingress_entry: index.php
 ingress_stream: true
 panel_icon: mdi:email-multiple
 # panel_icon: mdi:mailbox
@@ -41,22 +41,10 @@ schema:
     endpoint: str
     public_key: str
     allowed_IPs: str
-
-  roundcube:
-    database_url: str?
-    ROUNDCUBEMAIL_DEFAULT_HOST: str?
-    ROUNDCUBEMAIL_DEFAULT_PORT: str?
-    ROUNDCUBEMAIL_SMTP_SERVER: str?
-    ROUNDCUBEMAIL_SMTP_PORT: str?
-    ROUNDCUBEMAIL_PLUGINS: str?
-    ROUNDCUBEMAIL_SKIN: str?
-    ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: str?
-    ROUNDCUBEMAIL_SPELLCHECK_URI: str?
-    ROUNDCUBEMAIL_ASPELL_DICTS: str?
 options:
   heisenbridge:
-    synapse_url: null
-    own_url: http://674b3982-roundcube-heisenbridge-wireguard:9898/
+    synapse_url: http://674b3982-matrixdotorg-synapse:8008/
+    own_url: http://674b3982-wireguard-heisenbridge-webmail:9898/
     owner_mxid: null
 
   wireguard:
@@ -65,15 +53,3 @@ options:
     endpoint: null
     public_key: null
     allowed_IPs: null
-
-  roundcube:
-    database_url: ""
-    ROUNDCUBEMAIL_DEFAULT_HOST: ""
-    ROUNDCUBEMAIL_DEFAULT_PORT: ""
-    ROUNDCUBEMAIL_SMTP_SERVER: ""
-    ROUNDCUBEMAIL_SMTP_PORT: ""
-    ROUNDCUBEMAIL_PLUGINS: ""
-    ROUNDCUBEMAIL_SKIN: ""
-    ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: ""
-    ROUNDCUBEMAIL_SPELLCHECK_URI: ""
-    ROUNDCUBEMAIL_ASPELL_DICTS: ""
