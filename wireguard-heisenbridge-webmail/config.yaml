@@ -29,27 +29,27 @@ map:
   # Move the appservice registration.yaml file here so that the synapse container can see it
   - share:rw
 schema:
-  heisenbridge:
-    synapse_url: str
-    own_url: str
-    owner_mxid: str
+  heisenbridge_synapse_url: str
+  heisenbridge_own_url: str
+  heisenbridge_owner_mxid: str
 
-  wireguard:
-    own_IP: str
-    private_key: password
+  wireguard_own_IP: str
+  wireguard_private_key: password
 
-    endpoint: str
-    public_key: str
-    allowed_IPs: str
+  wireguard_endpoint: str
+  wireguard_public_key: str
+  wireguard_allowed_IPs: [str]
+
+  muttrc: [str]
 options:
-  heisenbridge:
-    synapse_url: http://674b3982-matrixdotorg-synapse:8008/
-    own_url: http://674b3982-wireguard-heisenbridge-webmail:9898/
-    owner_mxid: null
+  heisenbridge_synapse_url: http://674b3982-matrixdotorg-synapse:8008/
+  heisenbridge_own_url: http://674b3982-wireguard-heisenbridge-webmail:9898/
+  heisenbridge_owner_mxid: null
 
-  wireguard:
-    own_IP: null
-    private_key: null
-    endpoint: null
-    public_key: null
-    allowed_IPs: null
+  wireguard_own_IP: null
+  wireguard_private_key: null
+  wireguard_endpoint: null
+  wireguard_public_key: null
+  wireguard_allowed_IPs: null
+
+  muttrc: []

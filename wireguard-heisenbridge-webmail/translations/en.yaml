@@ -1,13 +1,13 @@
 ---
 configuration:
-  owner_mxid:
+  heisenbridge_owner_mxid:
     name: "Owner MXID (eg: @user:example.net)"
     description: "or first talking local user will claim the bridge"
 
-  synapse_url:
+  heisenbridge_synapse_url:
     name: "The URL this appservice should use to connect to the homeserver."
 
-  own_url:
+  heisenbridge_own_url:
     name: "The address that the homeserver can use to connect to this appservice."
 
   wireguard.conf:

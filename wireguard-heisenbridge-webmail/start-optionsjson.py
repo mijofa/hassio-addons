@@ -22,7 +22,7 @@ HA_options = json.loads(OPTIONS_FILE.read_text())
 
 # FIXME: Don't listen on the VPN IP address.
 heisenbridge_args = ['--config', str(REGISTRATION_FILE), '--listen-address', '0.0.0.0',
-                     '--owner', HA_options['heisenbridge']['owner_mxid'], HA_options['heisenbridge']['synapse_url']]
+                     '--owner', HA_options['heisenbridge_owner_mxid'], HA_options['heisenbridge_synapse_url']]
 
 if __name__ == "__main__":
     # Generate registration.yaml if it doesn't already exist
@@ -30,20 +30,24 @@ if __name__ == "__main__":
         print("Overwriting registration yaml.", flush=True)
         subprocess.check_call(['heisenbridge', '--generate', *heisenbridge_args])
         registration_yaml = yaml.safe_load(REGISTRATION_FILE.read_text())
-        registration_yaml['url'] = HA_options['heisenbridge']['own_url']
+        registration_yaml['url'] = HA_options['heisenbridge_own_url']
         REGISTRATION_FILE.write_text(yaml.dump(registration_yaml))
+        print("Appservice registration yaml generated, go sort out registration before restarting this addon.",
+              file=sys.stderr, flush=True)
 
     print('Starting Wireguard interface.', flush=True)
     WIREGUARD_CONF.write_text(
         '\n'.join((
             "[Interface]",
-            "Address = {own_IP}",
-            "PrivateKey = {private_key}",
+            "Address = {wireguard_own_IP}",
+            "PrivateKey = {wireguard_private_key}",
             "[Peer]",
-            "Endpoint = {endpoint}",
-            "PublicKey = {public_key}",
-            "AllowedIPs = {allowed_IPs}",
-        )).format(**HA_options['wireguard']))
+            "Endpoint = {wireguard_endpoint}",
+            "PublicKey = {wireguard_public_key}",
+            "AllowedIPs = {joined_wireguard_allowed_IPs}",
+        )).format(**HA_options, joined_wireguard_allowed_IPs=', '.join(HA_options['wireguard_allowed_IPs'])))
+
+    print('Starting Wireguard interface.', flush=True)
     subprocess.check_call(['wg-quick', 'up', 'wg0'])
 
     print('Got IP addresses;', flush=True)
