@@ -34,37 +34,37 @@ if __name__ == "__main__":
         REGISTRATION_FILE.write_text(yaml.dump(registration_yaml))
         print("Appservice registration yaml generated, go sort out registration before restarting this addon.",
               file=sys.stderr, flush=True)
+    else:
+        print('Writing wg-quick config.', flush=True)
+        WIREGUARD_CONF.write_text(
+            '\n'.join((
+                "[Interface]",
+                "Address = {wireguard_own_IP}",
+                "PrivateKey = {wireguard_private_key}",
+                "[Peer]",
+                "Endpoint = {wireguard_endpoint}",
+                "PublicKey = {wireguard_public_key}",
+                "AllowedIPs = {joined_wireguard_allowed_IPs}",
+            )).format(**HA_options, joined_wireguard_allowed_IPs=', '.join(HA_options['wireguard_allowed_IPs'])))
 
-    print('Starting Wireguard interface.', flush=True)
-    WIREGUARD_CONF.write_text(
-        '\n'.join((
-            "[Interface]",
-            "Address = {wireguard_own_IP}",
-            "PrivateKey = {wireguard_private_key}",
-            "[Peer]",
-            "Endpoint = {wireguard_endpoint}",
-            "PublicKey = {wireguard_public_key}",
-            "AllowedIPs = {joined_wireguard_allowed_IPs}",
-        )).format(**HA_options, joined_wireguard_allowed_IPs=', '.join(HA_options['wireguard_allowed_IPs'])))
+        print('Starting Wireguard interface.', flush=True)
+        subprocess.check_call(['wg-quick', 'up', 'wg0'])
 
-    print('Starting Wireguard interface.', flush=True)
-    subprocess.check_call(['wg-quick', 'up', 'wg0'])
+        print('Got IP addresses;', flush=True)
+        subprocess.check_call(['ip', '-oneline', 'address'])
+        print('Starting Heisenbridge with command:', ['heisenbridge', *heisenbridge_args], flush=True)
+        heisenbridge = subprocess.Popen(['heisenbridge', *heisenbridge_args])
+        roundcube = subprocess.Popen(['sleep', 'infinity'])
 
-    print('Got IP addresses;', flush=True)
-    subprocess.check_call(['ip', '-oneline', 'address'])
-    print('Starting Heisenbridge with command:', ['heisenbridge', *heisenbridge_args], flush=True)
-    heisenbridge = subprocess.Popen(['heisenbridge', *heisenbridge_args])
-    roundcube = subprocess.Popen(['sleep', 'infinity'])
-
-    crashed = False
-    while crashed is False:
-        pid, status = os.wait()
-        print(pid, status, file=sys.stderr, flush=True)
-        if pid == heisenbridge.pid:
-            crashed = True
-            print("Heisenbridge exited, killing Roundcube and exiting.", file=sys.stderr, flush=True)
-            roundcube.kill()
-        elif pid == roundcube.pid:
-            crashed = True
-            print("Roundcube exited, killing Heisenbridge and exiting.", file=sys.stderr, flush=True)
-            heisenbridge.kill()
+        crashed = False
+        while crashed is False:
+            pid, status = os.wait()
+            print(pid, status, file=sys.stderr, flush=True)
+            if pid == heisenbridge.pid:
+                crashed = True
+                print("Heisenbridge exited, killing Roundcube and exiting.", file=sys.stderr, flush=True)
+                roundcube.kill()
+            elif pid == roundcube.pid:
+                crashed = True
+                print("Roundcube exited, killing Heisenbridge and exiting.", file=sys.stderr, flush=True)
+                heisenbridge.kill()
