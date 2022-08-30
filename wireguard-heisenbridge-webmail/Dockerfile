@@ -6,7 +6,7 @@ FROM tsl0922/ttyd:latest
 RUN apt update && \
     apt install -y --no-install-recommends wireguard-tools iproute2 python3-yaml python3-pip vim && \
     python3 -m pip install heisenbridge && \
-    DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends neomutt && \
+    DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends neomutt libsasl2-modules && \
     usermod --home /data nobody  # I want to run mutt as 'nobody', but it needs a $HOME for mutt to store state and such
 
 # ttyd's ENTRYPOINT is ['/usr/bin/tini', '--'] with a CMD of ['ttyd', 'bash']
