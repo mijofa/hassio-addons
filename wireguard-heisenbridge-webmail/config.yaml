@@ -40,6 +40,8 @@ schema:
   wireguard_public_key: str
   wireguard_allowed_IPs: [str]
 
+  signature: str
+
   muttrc: [str]
 options:
   heisenbridge_synapse_url: http://674b3982-matrixdotorg-synapse:8008/
@@ -51,6 +53,8 @@ options:
   wireguard_endpoint: null
   wireguard_public_key: null
   wireguard_allowed_IPs: null
+
+  signature: ""
 
   muttrc:
     ## Simply what I personally decided are sensible defaults

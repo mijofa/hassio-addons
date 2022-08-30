@@ -14,6 +14,7 @@ OPTIONS_FILE = pathlib.Path('/data/options.json')
 WIREGUARD_CONF = pathlib.Path('/etc/wireguard/wg0.conf')
 REGISTRATION_FILE = (pathlib.Path('/share/matrix_appservices/') / socket.gethostname()).with_suffix('.yaml')
 MUTTRC_PATH = pathlib.Path('/tmp/Muttrc')
+SIGNATURE_PATH = pathlib.Path('/data/.signature')
 
 
 if not OPTIONS_FILE.exists():
@@ -52,8 +53,10 @@ if __name__ == "__main__":
         if HA_options['muttrc']:
             assert not MUTTRC_PATH.exists()
             MUTTRC_PATH.write_text('\n'.join(HA_options['muttrc']))
-        # FIXME: Should I be programmatically determining this somehow? Mostly I just don't want it listening on the VPN
-        ttyd_nic = 'eth0'
+
+        print('Writing signature file', flush=True)
+        if HA_options['signature']:
+            SIGNATURE_PATH.write_text(HA_options['signature'])
 
         print('Starting Wireguard interface.', flush=True)
         subprocess.check_call(['wg-quick', 'up', 'wg0'])
@@ -63,6 +66,8 @@ if __name__ == "__main__":
         print('Starting Heisenbridge with command:', ['heisenbridge', *heisenbridge_args], flush=True)
         heisenbridge = subprocess.Popen(['heisenbridge', *heisenbridge_args])
 
+        # FIXME: Should I be programmatically determining this somehow? Mostly I just don't want it listening on the VPN
+        ttyd_nic = 'eth0'
         # NOTE: 65534 = nobody/nogroup
         ttyd_mutt_args = ['ttyd', '--port', '8099', '--interface', ttyd_nic,
                           '--uid', '65534', '--gid', '65534', '--cwd', '/data',

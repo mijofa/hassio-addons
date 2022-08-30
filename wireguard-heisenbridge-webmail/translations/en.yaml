@@ -10,6 +10,25 @@ configuration:
   heisenbridge_own_url:
     name: "The address that the homeserver can use to connect to this appservice."
 
-  wireguard.conf:
-    name: "The wireguard connection config."
-    description: "Does *NOT* support '[Interface] DNS'"
+  wireguard_own_IP:
+    name: "Wireguard IP address"
+    description: "[Interface] Address"
+  wireguard_private_key:
+    name: "Wireguard private key"
+    description: "[Interface] PrivateKey"
+  wireguard_endpoint:
+    name: "Wireguard upstream peer endpoint"
+    description: "[Peer] Endpoint"
+  wireguard_public_key:
+    name: "Wireguard upstream peer's public key"
+    descrption: "[Peer] PublicKey"
+  wireguard_allowed_IPs:
+    name: "Wireguard allowed IPs"
+    description: "[Peer] AllowedIPs"
+
+  signature:
+    name: "Email signature"
+
+  muttrc:
+    name: "Neomutt's config"
+    description: "Each list item is a separate line in ~/.muttrc"
