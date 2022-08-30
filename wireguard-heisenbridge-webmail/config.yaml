@@ -2,7 +2,7 @@ name: "Matrix Heisenbridge & Webmail, with Wireguard"
 description: >-
   Wireguard, IRC bridge for Matrix, and webmail. Intended for use with work's VPN to assist with work communications
 url: "https://github.com/mijofa/hassio-addons/wireguard_heisenbridge_webmail"
-version: "0.1.1"
+version: "0.1.2"
 slug: "wireguard_heisenbridge_webmail"
 ingress: true
 # ingress_port: 80
