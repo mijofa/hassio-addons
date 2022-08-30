@@ -4,7 +4,7 @@
 FROM tsl0922/ttyd:latest
 
 RUN apt update && \
-    apt install -y --no-install-recommends wireguard-tools iproute2 python3-yaml python3-pip && \
+    apt install -y --no-install-recommends wireguard-tools iproute2 python3-yaml python3-pip vim && \
     python3 -m pip install heisenbridge && \
     DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends neomutt && \
     usermod --home /data nobody  # I want to run mutt as 'nobody', but it needs a $HOME for mutt to store state and such
