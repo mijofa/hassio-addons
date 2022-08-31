@@ -2,7 +2,7 @@ name: "Matrix Steam bridge"
 description: >-
   Pretty bare-bones add-on wrapper for the icewind1991/mx-puppet-steam container
 url: "https://github.com/icewind1991/mx-puppet-steam"
-version: "0.0.1"
+version: "0.1.0"
 slug: "mx-puppet-steam"
 arch:
   # - aarch64
