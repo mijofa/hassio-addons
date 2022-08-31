@@ -1,0 +1,64 @@
+name: "Matrix Steam bridge"
+description: >-
+  Pretty bare-bones add-on wrapper for the icewind1991/mx-puppet-steam container
+url: "https://github.com/icewind1991/mx-puppet-steam"
+version: "0.0.1"
+slug: "mx-puppet-steam"
+arch:
+  # - aarch64
+  - amd64
+  # - armhf
+  # - armv7
+  # - i386
+map:
+  # Move the appservice registration.yaml file here so that the synapse container can see it
+  - share:rw
+#  # Makes sense to store the signing key in /ssl
+#  - ssl:ro
+#  # Better spot for storing the media files
+schema:
+  matrix_domain: str
+  synapse_url: str
+
+  login_shared_secret: password
+
+  config.yaml: str
+options:
+  matrix_domain: null
+  synapse_url: http://674b3982-matrixdotorg-synapse:8008/
+
+  login_shared_secret: ""
+
+  config.yaml: |
+    bridge:
+      # Port to host the bridge on which your homeserver will connect to
+      port: 6000
+      # Address for the bridge to bind to; if running as a Docker container, you
+      # probably want 0.0.0.0 here
+      # FIXME: As far as I can tell from the src, this is *only* used to set the registration url, not an actual bind address
+      bindAddress: 674b3982-mx-puppet-bridge
+      # Name of your homeserver
+      domain: {matrix_domain}
+      # URL where the bridge can connect to your homeserver
+      homeserverUrl: {synapse_url}
+
+    provisioning:
+      # Which users are allowed to issue commands to @_steampuppet_bot
+      # whitelist:
+      #  - "@*:matrix.example.com"
+      # A blacklist can be used instead:
+      # blacklist:
+      #   - "@username:matrix\\.myhomeserver\\.com"
+
+      # Shared secret for the provisioning API for use by integration managers.
+      # If this is not set, the provisioning API will not be enabled.
+      sharedSecret: {login_shared_secret}
+      # Path prefix for the provisioning API. /v1 will be appended to the prefix automatically.
+      apiPrefix: /_matrix/provision
+
+    presence:
+      # Bridge Steam online/offline status
+      enabled: true
+
+      # How often to send status to the homeserver in milliseconds
+      interval: 5000
