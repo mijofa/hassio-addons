@@ -19,6 +19,7 @@ map:
 schema:
   matrix_domain: str
   synapse_url: str
+  own_hostname: str
 
   login_shared_secret: password
 
@@ -26,6 +27,8 @@ schema:
 options:
   matrix_domain: null
   synapse_url: http://674b3982-matrixdotorg-synapse:8008/
+  # FIXME: Make it work with own_url for consistency with other add-ons
+  own_hostname: 674b3982-mx-puppet-steam
 
   login_shared_secret: ""
 
@@ -36,7 +39,7 @@ options:
       # Address for the bridge to bind to; if running as a Docker container, you
       # probably want 0.0.0.0 here
       # FIXME: As far as I can tell from the src, this is *only* used to set the registration url, not an actual bind address
-      bindAddress: 674b3982-mx-puppet-bridge
+      bindAddress: {own_hostname}
       # Name of your homeserver
       domain: {matrix_domain}
       # URL where the bridge can connect to your homeserver

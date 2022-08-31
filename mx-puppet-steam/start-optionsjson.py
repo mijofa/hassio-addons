@@ -25,7 +25,11 @@ application_conf = yaml.safe_load(HA_options['config.yaml'].format(**HA_options)
 if __name__ == "__main__":
     print("Overwriting config.yaml with custom config", flush=True)
     CONFIG_FILE.write_text(yaml.dump(application_conf))
-    if not REGISTRATION_FILE.exists():
+    if not (REGISTRATIONS_DIR / 'mx-puppet-steam.yaml').exists():
+        # Still create and leave a copy right where mx-puppet-steam expects it, but if there is already one, start from that.
+        # This is so that I can rebuild this image's /data repeatedly without needing to resync the as & hs tokens.
+        # I do it in a much nicer way in other addons, but this addon doesn't support specifying those tokens in the config.yaml.
+        assert not REGISTRATION_FILE.exists()
         # Appservice registration file has not been created, this is probably the first run.
         # So let's generate it and copy it somewhere Synapse can find it.
         subprocess.check_call(['/opt/mx-puppet-steam/docker-run.sh'])
@@ -38,6 +42,8 @@ if __name__ == "__main__":
         print("Appservice registration yaml generated, go sort out registration before restarting this addon.",
               file=sys.stderr, flush=True)
     else:
+        print("Copying registration file from /share")
+        REGISTRATION_FILE.write_text((REGISTRATIONS_DIR / 'mx-puppet-steam.yaml').read_text())
         # Start normally
         print("Starting service", flush=True)
         subprocess.check_call(['/opt/mx-puppet-steam/docker-run.sh'])
