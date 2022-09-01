@@ -1,6 +1,6 @@
 name: "snapcast-proxy"
 description: "Snapcast Client & Server proxy"
-version: "0.31"
+version: "0.32"
 slug: "snapcastproxy"
 init: false
 arch:

@@ -1,0 +1,7 @@
+---
+build_from:
+  # FIXME: Should I just base off of latest? https://hub.docker.com/r/homeassistant/amd64-addon-vlc/tags
+  aarch64: homeassistant/aarch64-addon-vlc:0.1.3
+  amd64: homeassistant/amd64-addon-vlc:0.1.3
+  armv7: homeassistant/armv7-addon-vlc:0.1.3
+  i386: homeassistant/i386-addon-vlc:0.1.3
