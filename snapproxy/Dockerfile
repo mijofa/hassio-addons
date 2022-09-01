@@ -4,19 +4,21 @@ FROM $BUILD_FROM
 # Add env
 ENV LANG C.UTF-8
 
+# I don't need nginx
+RUN apk del nginx
+RUN rm -rv /etc/services.d/nginx
+
+# Gah shit, maybe I was better off just starting from scratch and redoing the VLC stuff
+# Snapserver in this version of Alpine is too old, but this version of Alpine is old so just upgrade
+RUN apk update && apk upgrade && \
+    sed -i 's/v3.13/v3.16/' /etc/apk/repositories && \
+    apk upgrade --available
+
 #Install snapcast
 RUN apk add --no-cache snapcast patch pulseaudio-utils
 
+# Fix snapweb to work with https websockets
 COPY snapjs.patch /
-#RUN patch -p0 -i /snapjs.patch
-
-RUN ls -alp /etc/services.d/
-RUN rm -rv /etc/services.d/nginx
+RUN patch -p0 -i /snapjs.patch
 
 COPY rootfs /
-
-# # So COPY supports --chown, but not any sort of --mode argument?!?!?
-# COPY run.sh /run.sh
-# RUN chmod 555 /run.sh
-# 
-# CMD [ "/run.sh" ]
