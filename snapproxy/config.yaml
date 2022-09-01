@@ -10,9 +10,11 @@ arch:
   - armv7
   - i386
 audio: true
+discovery:
+  - vlc_telnet
 hassio_api: true
 hassio_role: manager  # Only needed to instruct HA to reload the audio config
-startup: system
+startup: services
 boot: auto
 map:
   - share:rw
