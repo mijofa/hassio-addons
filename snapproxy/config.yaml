@@ -1,6 +1,6 @@
 name: "snapcast-proxy"
 description: "Snapcast Client & Server proxy"
-version: "0.32"
+version: "0.33"
 slug: "snapcastproxy"
 init: false
 arch:
@@ -12,6 +12,7 @@ arch:
 audio: true
 discovery:
   - vlc_telnet
+stdin: true
 hassio_api: true
 hassio_role: manager  # Only needed to instruct HA to reload the audio config
 startup: services
@@ -58,4 +59,4 @@ options:
   tcp_enabled: true
   logging_filter: "*:info"
   server_threads: -1
-  server_datadir: "/share/snapcast/"
+  server_datadir: "/data/"
