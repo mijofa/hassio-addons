@@ -91,6 +91,7 @@ options:
     - color quoted7 brightblack default
     - color sidebar_divider green blue
     - color sidebar_highlight black blue
+    - color sidebar_new bold default default
     # Get a little more info when polling mailboxes (so that the sidebar will render that info)
     - set mail_check_stats
     # Display the side bar and make it more useful.
