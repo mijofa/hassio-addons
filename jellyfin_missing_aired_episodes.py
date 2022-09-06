@@ -1,5 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """Find any new episodes available for Jellyfin's list of TV shows."""
+import sys
 import argparse
 import collections
 import datetime
@@ -9,6 +10,8 @@ import urllib.parse
 import urllib.request
 
 INFINITE_AGE = datetime.datetime(datetime.MINYEAR, 1, 1).date()
+# ref: https://github.com/jellyfin/jellyfin-web/blob/master/src/controllers/playback/video/index.js#L30
+TICKS_PER_MINUTE = 600000000
 
 
 def str_endswith_forwardslash(s):
@@ -32,7 +35,8 @@ group.add_argument('--token-file', type=pathlib.Path,
 args = argparser.parse_args()
 
 if args.token:
-    print("WARNING: It is recommended you use --token-file instead of --token")
+    # FIXME: Can we do a '!secret foo' to query it from Home Assistant directly?
+    # print("WARNING: It is recommended you use --token-file instead of --token", file=sys.stderr)
     api_key = args.token
 else:
     with args.token_file.open('r') as token_file:
@@ -63,7 +67,7 @@ base_search_query = {
 # but seriesName has looked unique so far and it makes things a bit easier when debugging.
 allepisodes_query_str = urllib.parse.urlencode(dict(includeItemTypes='Episode',  # Only want episodes
                                                     isUnaired=False,  # That haven't aired yet
-                                                    fields='Path',  # To determine if we already have it
+                                                    fields='Path,SeriesStudio,RunTimeTicks,ImageTags',
                                                     **base_search_query))
 allepisodes_req = urllib.request.Request(endpoint_url + '?' + allepisodes_query_str,
                                          headers=base_headers,
@@ -95,7 +99,7 @@ with urllib.request.urlopen(allepisodes_req) as allepisodes_response:
 # Since that data is not visible in the episodes query above at all
 allseries_query_str = urllib.parse.urlencode(dict(includeItemTypes='Series',  # Don't want episode items here
                                                   seriesStatus='Continuing',  # Don't care about ended series
-                                                  fields='ExternalUrls',  # For IMDB IDs
+                                                  fields='ExternalUrls,Genres,ImageTags',
                                                   **base_search_query))
 allseries_req = urllib.request.Request(endpoint_url + '?' + allseries_query_str,
                                        headers=base_headers,
@@ -106,6 +110,16 @@ with urllib.request.urlopen(allseries_req) as allseries_response:
     # FIXME: Use a smarter key that understands "^The ..."
     allseries_data['Items'].sort(key=lambda i: i['Name'])
 
+# I don't actually understand what this first data entry is
+# Presumably some sort of template for rendering the rest of it
+data = [{
+    'title_default': '$title',
+    'line1_default': '$number - $episode',
+    'line2_default': '$release',
+    'line3_default': '$rating',
+    'line4_default': '$studio',
+    'icon': 'mdi:arrow-down-bold-circle',
+}]
 for series in allseries_data['Items']:
     # The includeItemTypes above ensures this, but let's double check anyway
     assert series['Type'] == 'Series', series
@@ -127,35 +141,38 @@ for series in allseries_data['Items']:
             # Stop scanning here and assume everything older has been seen.
             # This way season 1 can be deleted while watching season 2 without constant pestering that season 1 is missing
             break
-
     if missing_episodes_of_this_series:
-        # FIXME: Theoretically this URL belongs inside Jellyfin, but that requires a whole plugin and I CBFed
-        ExternalUrls = {e['Name']: e['Url'] for e in series['ExternalUrls']}
-        if 'IMDb' in ExternalUrls:
-            # FIXME: Is rpartition really the best way to do this?
-            # NOTE: RARBG gives a 404 if there's no '/' on the end of this URL
-            # NOTE: RARBG is sometimes a bit delayed at adding episodes to this "TV browser", maybe just stick with the search URL?
-            ExternalUrls['RARBG'] = urllib.parse.urljoin("http://rarbg.to/tv/", ExternalUrls['IMDb'].rpartition('/')[-1]) + '/'
-        else:
-            ExternalUrls['RARBG'] = "http://rarbg.to/torrents.php?" + urllib.parse.urlencode({'search': series['Name']})
+        episode = missing_episodes_of_this_series[0]
+        del missing_episodes_of_this_series
 
-        print("{series[Name]} ({RARBG_URL})".format(series=series, RARBG_URL=ExternalUrls['RARBG']))
-        if len(missing_episodes_of_this_series) == len(episodes_by_series[series['Name']]):
-            print("* All episodes missing.")
-            print("* Have the episodes been deleted without the series itself?")
-            continue
-        else:
-            count = 0
-            for i in missing_episodes_of_this_series:
-                if count >= 10:
-                    # Don't let 1 series fill the screen
-                    print("* ... and {0} more".format(len(missing_episodes_of_this_series) - 10))
-                    break
-                else:
-                    count += 1
-                print("* {SeasonName}".format(**i),
-                      "S{ParentIndexNumber:02}E{IndexNumber:02}".format(
-                          ParentIndexNumber=i.get('ParentIndexNumber', 0),
-                          IndexNumber=i.get('IndexNumber', 0)),
-                      "{Name}  (Premiered: {PremiereDate})".format(**i),
-                      sep=' - ')
+        imdb_url, = (url['Url'] for url in series.get('ExternalUrls', []) if url.get('Name') == 'IMDb')
+        imdb_id = imdb_url.rpartition('/')[-1]
+
+        rating = episode.get('OfficialRating', series.get('OfficialRating', None))
+        comm_rating = episode.get('CommunityRating', series.get('CommunityRating', None))
+
+        data.append({
+            "title": episode['SeriesName'],
+            "episode": episode['Name'],
+            "flag": False,  # FIXME: What does this mean? Seen? None of these are seen, that's the point
+            # FIXME: Do I really need to combine the time into it?
+            "airdate": datetime.datetime.combine(episode['PremiereDate'], datetime.datetime.min.time()).isoformat(),
+            # FIXME: Use an f-string
+            "number": "S{se:02}E{ep:02}".format(se=episode.get('ParentIndexNumber', 0), ep=episode.get('IndexNumber', 0)),
+            "runtime": int(episode['RuntimeTicks'] / TICKS_PER_MINUTE) if 'RuntimeTicks' in episode else None,
+            "studio": f"{episode['SeriesStudio']} - {imdb_id}" if 'SeriesStudio' in episode else imdb_id,
+            "release": episode['PremiereDate'].strftime('%d/%m/%Y'),
+            # "poster": f"{args.base_url}/Items/{episode['Id']}/Images/Primary?MaxWidth=500&format=jpg",
+            "poster": urllib.parse.urljoin(args.base_url,
+                                           f"Items/{episode['Id']}/Images/Primary?MaxWidth=500&format=jpg")
+                      if 'Primary' in episode.get('ImageTags', {}) else urllib.parse.urljoin(
+                          args.base_url, f"Items/{series['Id']}/Images/Primary?MaxWidth=500&format=jpg"),
+            "fanart": None,  # FIXME
+            "genres": series.get('Genres', []),  # FIXME: Should this be a string?
+            # "genres": ', '.join(series.get('Genres', [])),
+            "rating": f"{rating} - {comm_rating}" if rating and comm_rating else rating or comm_rating,
+            "stream_url": None,  # This will never be usable as we are specifically getting missing episodes
+            "info_url": urllib.parse.urljoin(args.base_url, f"web/index.html#!/details?id={episode['Id']}"),
+        })
+
+json.dump({'data': data}, sys.stdout)
