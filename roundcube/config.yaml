@@ -1,0 +1,44 @@
+name: "Roundcube"
+description: >-
+  Wrapper for the official Roundcube container
+url: "https://github.com/mijofa/hassio-addons/roundcube"
+version: "0.0.1"
+slug: "roundcube"
+ingress: true
+ingress_port: 80
+ingress_entry: index.php
+ingress_stream: true
+panel_icon: mdi:email-multiple
+# panel_icon: mdi:mailbox
+# panel_icon: mdi:at
+panel_title: Email
+arch:
+  # - aarch64
+  - amd64
+  # - armhf
+  # - armv7
+  # - i386
+schema:
+  roundcube:
+    database_url: str?
+    ROUNDCUBEMAIL_DEFAULT_HOST: str?
+    ROUNDCUBEMAIL_DEFAULT_PORT: str?
+    ROUNDCUBEMAIL_SMTP_SERVER: str?
+    ROUNDCUBEMAIL_SMTP_PORT: str?
+    ROUNDCUBEMAIL_PLUGINS: str?
+    ROUNDCUBEMAIL_SKIN: str?
+    ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: str?
+    ROUNDCUBEMAIL_SPELLCHECK_URI: str?
+    ROUNDCUBEMAIL_ASPELL_DICTS: str?
+options:
+  roundcube:
+    database_url: ""
+    ROUNDCUBEMAIL_DEFAULT_HOST: ""
+    ROUNDCUBEMAIL_DEFAULT_PORT: ""
+    ROUNDCUBEMAIL_SMTP_SERVER: ""
+    ROUNDCUBEMAIL_SMTP_PORT: ""
+    ROUNDCUBEMAIL_PLUGINS: ""
+    ROUNDCUBEMAIL_SKIN: ""
+    ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: ""
+    ROUNDCUBEMAIL_SPELLCHECK_URI: ""
+    ROUNDCUBEMAIL_ASPELL_DICTS: ""
