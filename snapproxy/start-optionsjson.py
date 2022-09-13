@@ -79,11 +79,39 @@ if __name__ == "__main__":
     snapserver = subprocess.Popen(snapserver_args)
     processes[snapserver.pid] = snapserver
 
-    #mpd = subprocess.Popen(['mpd'])
-    #processes[mpd.pid] = mpd
+    # FIXME: MPD seems to be the only controlable media player that doesn't struggle immensly at the beginning of a stream.
+    #        Worth considering mopidy?
 
-    # FIXME: Include mpd, as it seems to be the only controlable media player that doesn't struggle immensly at the beginning of a stream.
-    #        Worth considering mopidy? I want this as minimal as possible, so probably not, but I don't think mpd is particularly active nowadays since mopidy is winning.
+    mpd_music = subprocess.Popen(['mpd', '--no-daemon', '/dev/stdin'], env={'PULSE_SINK': 'snapfifo'},
+                                 stdin=subprocess.PIPE, text=True)
+    print('include "/etc/mpd.conf"',
+          'audio_output {',
+          '   type "pulse"',
+          '   sink "snapfifo"',
+          '   mixer_type "software"',  # Just so that HA can temporarily lower the volume when playing other sounds
+          '   media_role "music"'
+          '}',
+          'port "6600"',
+          sep='\n', file=mpd_music.stdin, flush=True)
+    mpd_music.stdin.close()
+    processes[mpd_music.pid] = mpd_music
+
+    mpd_other = subprocess.Popen(['mpd', '--no-daemon', '/dev/stdin'], env={'PULSE_SINK': 'snapfifo'},
+                                 stdin=subprocess.PIPE, text=True)
+    # FIXME: Same as above except for port number, so make this a variable or something
+    print('include "/etc/mpd.conf"',
+          'audio_output {',
+          '   type "pulse"',
+          '   sink "snapfifo"',
+          # '   mixer_type "software"',  # This one should always be 100%, do we need a mixer?
+          '   media_role "event"'
+          '}',
+          'port "6601"',
+          sep='\n', file=mpd_other.stdin, flush=True)
+    mpd_other.stdin.close()
+    processes[mpd_music.pid] = mpd_other
+
+    # FIXME: It'd be great if I could get Pulseaudio to do role-ducking instead of HA changing the volumes of each stream
 
     crashed = False
     while crashed is False:

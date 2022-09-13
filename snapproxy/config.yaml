@@ -1,6 +1,8 @@
-name: "snapcast-proxy"
-description: "Snapcast Client & Server proxy"
-version: "0.35"
+name: "snapcast"
+description: "Snapcast Media Player"
+version: "0.4"
+# FIXME: This slug is outdated given I don't consider this a "proxy" anymore,
+#        but it's kinda baked into the HA config and other places by now
 slug: "snapcastproxy"
 init: false
 arch:
@@ -26,6 +28,8 @@ ports:
   1704/tcp: 1704
   1705/tcp: 1705
   1780/tcp: 1780
+  6600/tcp: 6600
+  6601/tcp: 6601
 ports_description:
   1704/tcp: "Snapserver stream endpoint"
   1705/tcp: "Snapserver control endpoint"
