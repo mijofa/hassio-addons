@@ -1,13 +1,10 @@
 #!/usr/bin/python3
 """Small wrapper for the base upstream startup script to read config from Home Assistant's /data/options.json."""
 import datetime
-import grp
 import json
 import os
 import pathlib
-import pwd
 import secrets
-import stat
 import subprocess
 import sys
 
@@ -66,39 +63,26 @@ if __name__ == "__main__":
                                *("""sink_properties="device.description='Snapcast\\ FIFO'"""
                                  """device.icon_name='mdi:cast-audio'"""
                                  f"""mijofa.snapcast-proxy='{datetime.datetime.now()}'""")])
-        # FIXME: curl --silent --data '{}' -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/audio/reload
+        # FIXME: This sink won't be seen by Home Assistant without telling it to reload, but do we care?
+        #        curl --silent --data '{}' -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/audio/reload
 
-    # FIXME: Do Home Assistant discovery stuff for VLC
+    # Realistically, only one of these is actually necessary, but it doesn't hurt.
+    subprocess.check_call(['pactl', 'set-default-sink', 'snapfifo'])
+    os.environ['PULSE_SINK'] = 'snapfifo'
+
     # FIXME: Can I do discovery for MPD or Snapcast?
 
-    # FIXME: This is mental, do something better
-    # Before dropping privileges, fix permissions on pulse cookie so that nobody user can get to it.
-    PULSE_COOKIE_FILE.chmod(PULSE_COOKIE_FILE.stat().st_mode | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
-    # And make each parent directory executable
-    for p in PULSE_COOKIE_FILE.parents:
-        p.chmod(p.stat().st_mode | stat.S_IXGRP | stat.S_IXOTH)
-
-    # VLC won't run as root, so let's drop privileges
-    # FIXME: Should we do this sooner?
-    os.setgid(grp.getgrnam('audio').gr_gid)  # It's important this happens before os.setuid
-    os.setuid(pwd.getpwnam('nobody').pw_uid)
-
     snapserver_args = ['snapserver', '-c', '/etc/snapserver.conf']
-    vlc_args = ['cvlc', '--extraintf', 'telnet', '--telnet-password', SECRET_FILE.read_text().strip(),
-                # Since the general purpose of this is for endless HTTP streams, set some options for those
-                '--http-continuous', '--http-reconnect']
 
     processes = {}
     # FIXME: I should be setting environment variables for everything such that the fifo sink is the default
     snapserver = subprocess.Popen(snapserver_args)
     processes[snapserver.pid] = snapserver
-    # FIXME: For some reason I can't understand this won't process all the arguments properly without shell=True
-    #        Specifically if fails to do any of the telnet things properly.
-    vlc = subprocess.Popen(vlc_args)
-    processes[vlc.pid] = vlc
+
+    #mpd = subprocess.Popen(['mpd'])
+    #processes[mpd.pid] = mpd
 
     # FIXME: Include mpd, as it seems to be the only controlable media player that doesn't struggle immensly at the beginning of a stream.
-    #        On that note, get rid of VLC and just run 2 instances of mpd?
     #        Worth considering mopidy? I want this as minimal as possible, so probably not, but I don't think mpd is particularly active nowadays since mopidy is winning.
 
     crashed = False

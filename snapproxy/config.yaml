@@ -1,6 +1,6 @@
 name: "snapcast-proxy"
 description: "Snapcast Client & Server proxy"
-version: "0.34"
+version: "0.35"
 slug: "snapcastproxy"
 init: false
 arch:
@@ -10,19 +10,15 @@ arch:
   - armv7
   - i386
 audio: true
-discovery:
-  - vlc_telnet
 hassio_api: true
 homeassistant_api: true
-hassio_role: manager  # Only needed to instruct HA to reload the audio config
+# hassio_role: manager  # Only needed to instruct HA to reload the audio config
 startup: services
 boot: auto
 map:
   - share:rw
 ingress: true
 ingress_port: 1780
-# FIXME: This depends on Nginx allowing websocket connections through to work with Ingress.
-#        I expected this ingress_stream option to fix that, but it didn't seem to have any effect.
 ingress_stream: true
 panel_icon: "mdi:speaker-wireless"
 panel_title: "Snapweb"
