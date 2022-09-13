@@ -63,6 +63,9 @@ if __name__ == "__main__":
                                *("""sink_properties="device.description='Snapcast\\ FIFO'"""
                                  """device.icon_name='mdi:cast-audio'"""
                                  f"""mijofa.snapcast-proxy='{datetime.datetime.now()}'""")])
+        subprocess.check_call(['pactl', 'load-module', 'module-role-ducking',
+                               'ducking_roles=music', 'trigger_roles=event',
+                               'global=false', 'volume=75%'])
         # FIXME: This sink won't be seen by Home Assistant without telling it to reload, but do we care?
         #        curl --silent --data '{}' -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/audio/reload
 
@@ -89,7 +92,7 @@ if __name__ == "__main__":
           '   name          "Pulseaudio snapfifo for Snapcast"',
           '   type          "pulse"',
           '   sink          "snapfifo"',
-          '   mixer_type    "software"',  # Just so that HA can temporarily lower the volume when playing other sounds
+          # '   mixer_type    "software"',
           '   media_role    "music"',
           '}',
           'port "6600"',
@@ -97,6 +100,7 @@ if __name__ == "__main__":
     mpd_music.stdin.close()
     processes[mpd_music.pid] = mpd_music
 
+    # FIXME: This one should be louder I think
     mpd_other = subprocess.Popen(['mpd', '--no-daemon', '/dev/stdin'], env={'PULSE_SINK': 'snapfifo'},
                                  stdin=subprocess.PIPE, text=True)
     # FIXME: Same as above except for port number, so make this a variable or something
@@ -105,7 +109,7 @@ if __name__ == "__main__":
           '   name          "Pulseaudio snapfifo for Snapcast"',
           '   type          "pulse"',
           '   sink          "snapfifo"',
-          # '   mixer_type    "software"',  # This one should always be 100%, do we need a mixer?
+          # '   mixer_type    "software"',
           '   media_role    "event"',
           '}',
           'port "6601"',

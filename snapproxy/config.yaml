@@ -1,6 +1,6 @@
 name: "snapcast"
 description: "Snapcast Media Player"
-version: "0.4"
+version: "0.41"
 # FIXME: This slug is outdated given I don't consider this a "proxy" anymore,
 #        but it's kinda baked into the HA config and other places by now
 slug: "snapcastproxy"
