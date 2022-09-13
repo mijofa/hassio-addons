@@ -12,7 +12,6 @@ arch:
 audio: true
 discovery:
   - vlc_telnet
-stdin: true
 hassio_api: true
 homeassistant_api: true
 hassio_role: manager  # Only needed to instruct HA to reload the audio config

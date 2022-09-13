@@ -62,12 +62,14 @@ if __name__ == "__main__":
                                'file=/data/external/snapfifo',  # This ends up at /run/audio/snapfifo in the addon
                                'sink_name=snapfifo', 'format=s16le', 'rate=48000',
                                # FIXME: PulseAudio is messy in it's interpretation of the sink_properties argument
+                               #        Don't touch this unless you're willing to figure it out.
                                *("""sink_properties="device.description='Snapcast\\ FIFO'"""
                                  """device.icon_name='mdi:cast-audio'"""
                                  f"""mijofa.snapcast-proxy='{datetime.datetime.now()}'""")])
         # FIXME: curl --silent --data '{}' -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/audio/reload
 
-    # FIXME: Do Home Assistant discovery stuff
+    # FIXME: Do Home Assistant discovery stuff for VLC
+    # FIXME: Can I do discovery for MPD or Snapcast?
 
     # FIXME: This is mental, do something better
     # Before dropping privileges, fix permissions on pulse cookie so that nobody user can get to it.
@@ -85,7 +87,6 @@ if __name__ == "__main__":
     vlc_args = ['cvlc', '--extraintf', 'telnet', '--telnet-password', SECRET_FILE.read_text().strip(),
                 # Since the general purpose of this is for endless HTTP streams, set some options for those
                 '--http-continuous', '--http-reconnect']
-    mpv_args = ['mpv']  # FIXME: There's probably some useful args I can/should add
 
     # FIXME: I should be setting environment variables for everything such that the fifo sink is the default
     snapserver = subprocess.Popen(snapserver_args)
@@ -93,22 +94,19 @@ if __name__ == "__main__":
     #        Specifically if fails to do any of the telnet things properly.
     vlc = subprocess.Popen(vlc_args)
 
-    if media_uri := sys.stdin.readline().strip():
-        print('Running MPV for:', media_uri, flush=True)
-        subprocess.check_call([*mpv_args, media_uri])
-    else:
-        print('Empty stdin line, doing nothing', flush=True)
+    # FIXME: Include mpd, as it seems to be the only controlable media player that doesn't struggle immensly at the beginning of a stream.
+    #        On that note, get rid of VLC and just run 2 instances of mpd?
+    #        Worth considering mopidy? I want this as minimal as possible, so probably not, but I don't think mpd is particularly active nowadays since mopidy is winning.
 
-    # FIXME: Handle killing off other processes when any 1 of them dies
-    # crashed = False
-    # while crashed is False:
-    #     pid, status = os.wait()
-    #     print(pid, status, file=sys.stderr, flush=True)
-    #     if pid == snapserver.pid:
-    #         crashed = True
-    #         print("Snapserver exited, killing others and exiting.", file=sys.stderr, flush=True)
-    #         vlc.kill()
-    #     elif pid == vlc.pid:
-    #         crashed = True
-    #         print("VLC exited, killing others and exiting.", file=sys.stderr, flush=True)
-    #         snapserver.kill()
+    crashed = False
+    while crashed is False:
+        pid, status = os.wait()
+        print(pid, status, file=sys.stderr, flush=True)
+        if pid == snapserver.pid:
+            crashed = True
+            print("Snapserver exited, killing others and exiting.", file=sys.stderr, flush=True)
+            vlc.kill()
+        elif pid == vlc.pid:
+            crashed = True
+            print("VLC exited, killing others and exiting.", file=sys.stderr, flush=True)
+            snapserver.kill()
