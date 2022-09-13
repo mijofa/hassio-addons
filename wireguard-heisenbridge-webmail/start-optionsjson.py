@@ -87,22 +87,24 @@ if __name__ == "__main__":
         print('Got IP addresses;', flush=True)
         subprocess.check_call(['ip', '-oneline', 'address'])
 
+        processes = {}
+
         print('Starting Heisenbridge with command:', ['heisenbridge', *heisenbridge_args], flush=True)
         heisenbridge = subprocess.Popen(['heisenbridge', *heisenbridge_args])
+        processes[heisenbridge.pid] = heisenbridge
 
         roundcube_args = ["/docker-entrypoint.sh", sys.argv[1] if len(sys.argv) >= 2 else "apache2-foreground", *sys.argv[2:]]
         print('Starting Roundcube with env:', roundcube_env, flush=True)
         roundcube = subprocess.Popen(roundcube_args, env={**os.environ, **roundcube_env})
+        processes[roundcube.pid] = roundcube
 
         crashed = False
         while crashed is False:
             pid, status = os.wait()
             print(pid, status, file=sys.stderr, flush=True)
-            if pid == heisenbridge.pid:
-                crashed = True
-                print("Heisenbridge exited, killing Roundcube and exiting.", file=sys.stderr, flush=True)
-                roundcube.kill()
-            elif pid == roundcube.pid:
-                crashed = True
-                print("ttyd exited, killing Heisenbridge and exiting.", file=sys.stderr, flush=True)
-                heisenbridge.kill()
+            if pid in processes:
+                crashed = processes.pop(pid)
+                print(f"{crashed.args[0]} crashed, killing others and exiting.", file=sys.stderr, flush=True)
+                for p in processes:
+                    print(f"Killing {p.args[0]}", file=sys.stderr, flush=True)
+                    p.kill()
