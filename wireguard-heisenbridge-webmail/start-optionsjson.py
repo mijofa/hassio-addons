@@ -105,6 +105,6 @@ if __name__ == "__main__":
             if pid in processes:
                 crashed = processes.pop(pid)
                 print(f"{crashed.args[0]} crashed, killing others and exiting.", file=sys.stderr, flush=True)
-                for p in processes:
-                    print(f"Killing {p.args[0]}", file=sys.stderr, flush=True)
-                    p.kill()
+                for pid in processes:
+                    print(f"Killing {processes[pid].args[0]}", file=sys.stderr, flush=True)
+                    processes[pid].kill()
