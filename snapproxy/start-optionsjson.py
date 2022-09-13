@@ -88,11 +88,14 @@ if __name__ == "__main__":
                 # Since the general purpose of this is for endless HTTP streams, set some options for those
                 '--http-continuous', '--http-reconnect']
 
+    processes = {}
     # FIXME: I should be setting environment variables for everything such that the fifo sink is the default
     snapserver = subprocess.Popen(snapserver_args)
+    processes[snapserver.pid] = snapserver
     # FIXME: For some reason I can't understand this won't process all the arguments properly without shell=True
     #        Specifically if fails to do any of the telnet things properly.
     vlc = subprocess.Popen(vlc_args)
+    processes[vlc.pid] = vlc
 
     # FIXME: Include mpd, as it seems to be the only controlable media player that doesn't struggle immensly at the beginning of a stream.
     #        On that note, get rid of VLC and just run 2 instances of mpd?
@@ -102,11 +105,9 @@ if __name__ == "__main__":
     while crashed is False:
         pid, status = os.wait()
         print(pid, status, file=sys.stderr, flush=True)
-        if pid == snapserver.pid:
-            crashed = True
-            print("Snapserver exited, killing others and exiting.", file=sys.stderr, flush=True)
-            vlc.kill()
-        elif pid == vlc.pid:
-            crashed = True
-            print("VLC exited, killing others and exiting.", file=sys.stderr, flush=True)
-            snapserver.kill()
+        if pid in processes:
+            crashed = processes.pop(pid)
+            print(f"{crashed.args[0]} crashed, killing others and exiting.", file=sys.stderr, flush=True)
+            for p in processes:
+                print(f"Killing {p.args[0]}", file=sys.stderr, flush=True)
+                p.kill()
