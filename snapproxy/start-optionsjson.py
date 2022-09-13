@@ -86,10 +86,11 @@ if __name__ == "__main__":
                                  stdin=subprocess.PIPE, text=True)
     print('include "/etc/mpd.conf"',
           'audio_output {',
-          '   type "pulse"',
-          '   sink "snapfifo"',
-          '   mixer_type "software"',  # Just so that HA can temporarily lower the volume when playing other sounds
-          '   media_role "music"'
+          '   name          "Pulseaudio snapfifo for Snapcast"',
+          '   type          "pulse"',
+          '   sink          "snapfifo"',
+          '   mixer_type    "software"',  # Just so that HA can temporarily lower the volume when playing other sounds
+          '   media_role    "music"',
           '}',
           'port "6600"',
           sep='\n', file=mpd_music.stdin, flush=True)
@@ -101,10 +102,11 @@ if __name__ == "__main__":
     # FIXME: Same as above except for port number, so make this a variable or something
     print('include "/etc/mpd.conf"',
           'audio_output {',
-          '   type "pulse"',
-          '   sink "snapfifo"',
-          # '   mixer_type "software"',  # This one should always be 100%, do we need a mixer?
-          '   media_role "event"'
+          '   name          "Pulseaudio snapfifo for Snapcast"',
+          '   type          "pulse"',
+          '   sink          "snapfifo"',
+          # '   mixer_type    "software"',  # This one should always be 100%, do we need a mixer?
+          '   media_role    "event"',
           '}',
           'port "6601"',
           sep='\n', file=mpd_other.stdin, flush=True)
