@@ -15,6 +15,7 @@ import yaml
 OPTIONS_FILE = pathlib.Path('/data/options.json')
 WIREGUARD_CONF = pathlib.Path('/etc/wireguard/wg0.conf')
 REGISTRATION_FILE = (pathlib.Path('/share/matrix_appservices/') / socket.gethostname()).with_suffix('.yaml')
+ROUNDCUBE_CONFIG = pathlib.Path('/var/www/html/config/config.docker.inc.php')
 
 # I've symlinked some Roundcube directories into /data, but now Roundcube expects them to exist first
 # FIXME: Is it safe to just symlink them to /data directly?
@@ -45,9 +46,9 @@ HA_options = json.loads(OPTIONS_FILE.read_text())
 heisenbridge_args = ['--config', str(REGISTRATION_FILE), '--listen-address', '0.0.0.0',
                      '--owner', HA_options['heisenbridge_owner_mxid'], HA_options['heisenbridge_synapse_url']]
 
-roundcube_env = HA_options['roundcube']
-if roundcube_env['database_url']:
-    roundcube_env.update(parse_dburl_for_roundcube(roundcube_env['database_url']))
+roundcube_env = {k: v for k, v in HA_options.items() if k.startswith('ROUNDCUBEMAIL_')}
+if roundcube_env['ROUNDCUBEMAIL_database_url']:
+    roundcube_env.update(parse_dburl_for_roundcube(roundcube_env['ROUNDCUBEMAIL_database_url']))
 
 # Remove empty variables so that it lets the defaults happen rather than treating them as empty strings
 for k, v in list(roundcube_env.items()):
@@ -87,15 +88,33 @@ if __name__ == "__main__":
         print('Got IP addresses;', flush=True)
         subprocess.check_call(['ip', '-oneline', 'address'])
 
+        # The default entrypoint doesn't let me set DEFAULT_HOST to a list,
+        # mostly because it forcibly adds a port number to the end of it.
+        # So let's edit the config directly ourselves.
+        roundcube_args = ["/docker-entrypoint.sh", sys.argv[1] if len(sys.argv) >= 2 else "apache2-foreground", *sys.argv[2:]]
+        print('Generating roundcube config with:', roundcube_env, flush=True)
+        # FIXME: The entrypoint exits non-zero even though everything seems fine. This makes error-handling difficult
+        roundcube_conf_gen = subprocess.run(roundcube_args, env={**os.environ, **roundcube_env,
+                                                                 'ROUNDCUBEMAIL_DEFAULT_HOST': 'REPLACEME',
+                                                                 'ROUNDCUBEMAIL_DEFAULT_PORT': 'IMAP',
+                                                                 'ROUNDCUBEMAIL_SMTP_SERVER': 'REPLACEME',
+                                                                 'ROUNDCUBEMAIL_SMTP_PORT': 'SMTP'})
+        rc_config_string = ROUNDCUBE_CONFIG.read_text()
+        if len(roundcube_env['ROUNDCUBEMAIL_DEFAULT_HOST']) == 1:
+            rc_config_string = rc_config_string.replace("'REPLACEME:IMAP'", repr(roundcube_env['ROUNDCUBEMAIL_DEFAULT_HOST'][0]))
+        else:
+            rc_config_string = rc_config_string.replace("'REPLACEME:IMAP'", repr(roundcube_env['ROUNDCUBEMAIL_DEFAULT_HOST']))
+        rc_config_string = rc_config_string.replace("'REPLACEME:SMTP'", repr(roundcube_env['ROUNDCUBEMAIL_SMTP_SERVER']))
+        ROUNDCUBE_CONFIG.write_text(rc_config_string)
+
         processes = {}
 
         print('Starting Heisenbridge with command:', ['heisenbridge', *heisenbridge_args], flush=True)
         heisenbridge = subprocess.Popen(['heisenbridge', *heisenbridge_args])
         processes[heisenbridge.pid] = heisenbridge
 
-        roundcube_args = ["/docker-entrypoint.sh", sys.argv[1] if len(sys.argv) >= 2 else "apache2-foreground", *sys.argv[2:]]
-        print('Starting Roundcube with env:', roundcube_env, flush=True)
-        roundcube = subprocess.Popen(roundcube_args, env={**os.environ, **roundcube_env})
+        print('Starting Roundcube with args:', roundcube_args[1:], flush=True)
+        roundcube = subprocess.Popen(roundcube_args[1:])
         processes[roundcube.pid] = roundcube
 
         crashed = False

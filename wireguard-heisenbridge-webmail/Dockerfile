@@ -25,6 +25,11 @@ RUN echo 'auto_prepend_file=/usr/local/etc/php/ingress-fix-prepend.php' >/usr/lo
         '    $_SERVER["REQUEST_URI"] = $_SERVER["HTTP_X_INGRESS_PATH"] . $_SERVER["REQUEST_URI"];' \
         '}'
 
+# The default entrypoint doesn't let me set DEFAULT_HOST to a list,
+# mostly because it forcibly adds a port number to the end of it.
+# So let's edit the config after creating it.
+RUN sed --in-place '$ s/^exec/# exec/ ; $i# Disabled so the alternative entrypoint can edit the config before running' /docker-entrypoint.sh
+
 # Roundcube's ENTRYPOINT is `ENTRYPOINT ["/docker-entrypoint.sh"]` with a CMD of `CMD ["apache2-foreground"]`
 # Note I *also* want to run Heisenbridge.
 # This wrapper script does that, and handles the /data/options.json file
