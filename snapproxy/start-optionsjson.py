@@ -60,9 +60,9 @@ if __name__ == "__main__":
                                'sink_name=snapfifo', 'format=s16le', 'rate=48000',
                                # FIXME: PulseAudio is messy in it's interpretation of the sink_properties argument
                                #        Don't touch this unless you're willing to figure it out.
-                               *("""sink_properties="device.description='Snapcast\\ FIFO'"""
-                                 """device.icon_name='mdi:cast-audio'"""
-                                 f"""mijofa.snapcast-proxy='{datetime.datetime.now()}'""")])
+                               ("""sink_properties="device.description='Snapcast\\ FIFO' """
+                                """device.icon_name='mdi:cast-audio' """
+                                f"""mijofa.snapcast-proxy='{datetime.datetime.now()}'" """)])
         subprocess.check_call(['pactl', 'load-module', 'module-role-ducking',
                                'ducking_roles=music', 'trigger_roles=event',
                                'global=false', 'volume=75%'])
