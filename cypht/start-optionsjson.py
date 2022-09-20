@@ -38,9 +38,12 @@ for k, v in list(HA_options.items()):
         HA_options.pop(k)
 
 
-cypht_env = {k: v for k, v in HA_options.items() if k.startswith('CYPHT_')}
-if cypht_env.get('CYPHT_DB_URL'):
-    cypht_env.update(parse_dburl(cypht_env.pop('CYPHT_DB_URL')))
+# The docker endpoint uses sed and doesn't escape the strings properly,
+# so when setting things like the timezone to "Australia/Melbourne" sed breaks.
+# Hence the .replace here.
+cypht_env = {k: v.replace('/', '\\/') for k, v in HA_options.items() if k.startswith('CYPHT_') and not k == 'CYPHT_DB_URL'}
+if HA_options.get('CYPHT_DB_URL'):
+    cypht_env.update(parse_dburl(HA_options['CYPHT_DB_URL']))
 
 if __name__ == "__main__":
     if not DATA_DIR.exists():
