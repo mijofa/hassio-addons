@@ -1,4 +1,6 @@
-FROM matrixdotorg/synapse:v1.65.0
+FROM matrixdotorg/synapse:v1.72.0
+# FIXME: Doing a huge version number jump, there's bound to be issues... right?
+#        1.65.0 -> 1.72.0
 
 # Download the latest version of element-web to Synapse's static directory
 RUN apt update && apt install -y jq && apt clean

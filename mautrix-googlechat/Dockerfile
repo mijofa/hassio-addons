@@ -1,4 +1,6 @@
-FROM dock.mau.dev/mautrix/googlechat:v0.3.3
+FROM dock.mau.dev/mautrix/googlechat:v0.4.0
+# NOTE: v0.4.0 enabled "appservice ephemeral events by default for new installations"
+#       looks like I already had that enabled myself though... weird
 
 # I could probably drop this dependency, but then I'd be relying on the application to check the yaml for me.
 RUN apk add py3-yaml
