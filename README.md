@@ -22,3 +22,8 @@ TODO
 
 * Give up on webmail (unless work updates Dovecot/Postfix), it's not worked for me.
   Remove it from the Heisenbridge add-on, and leave it just doing wireguard & heisenbridge.
+
+* **snapproxy**: Support back/skip/etc from snapcast clients.
+  Use upstream's meta_mpd.py, but rework it to control a Home Assistant media_player instead.
+  What Media Player instance it controls would have to be configured in the UI as I can't programmatically determine what is my own media player
+  FIXME: Maybe actually setup a fake "MPD" listener, so I can use various mpd clients to control Home Assistant, then plug this into that?
