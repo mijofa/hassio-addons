@@ -1,3 +1,4 @@
+# FIXME: This upstream image doesn't use version numbers, and has **only** a latest tag.
 FROM icewind1991/mx-puppet-steam:latest
 
 # I could probably drop this dependency, but then I'd be relying on the application to check the yaml for me.
