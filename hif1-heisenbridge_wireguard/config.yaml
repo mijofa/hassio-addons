@@ -22,8 +22,8 @@ map:
   # Move the appservice registration.yaml file here so that the synapse container can see it
   - share:rw
 schema:
-  heisenbridge_synapse_url: str
-  heisenbridge_own_url: str
+  heisenbridge_synapse_url: url
+  heisenbridge_own_url: url
   heisenbridge_owner_mxid: str
 
   wireguard_own_IP: str

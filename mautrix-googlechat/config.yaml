@@ -18,9 +18,9 @@ map:
 #  # Better spot for storing the media files
 schema:
   matrix_domain: str
-  database_url: str
-  synapse_url: str
-  own_url: str
+  database_url: url
+  synapse_url: url
+  own_url: url
 
   login_shared_secret: password
 
