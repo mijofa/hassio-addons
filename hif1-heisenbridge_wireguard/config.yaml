@@ -1,17 +1,10 @@
-name: "Matrix Heisenbridge & Webmail, with Wireguard"
+name: "Matrix Heisenbridge, with Wireguard"
 description: >-
-  Wireguard, IRC bridge for Matrix, and webmail. Intended for use with work's VPN to assist with work communications
-url: "https://github.com/mijofa/hassio-addons/wireguard_heisenbridge_webmail"
-version: "0.3.1"
-slug: "wireguard_heisenbridge_webmail"
-ingress: true
-ingress_port: 80
-ingress_entry: index.php
-ingress_stream: true
-panel_icon: mdi:email-multiple
-# panel_icon: mdi:mailbox
-# panel_icon: mdi:at
-panel_title: Email (VPN/work)
+  Add-on wrapper for hif1/heisenbridge, with included Wireguard support. Intended for use with work's VPN to assist with work communications
+url: "https://github.com/mijofa/hassio-addons/tree/master/hif1-heisenbridge_wireguard"
+version: "0.4.0"
+slug: "hif1-heisenbridge_wireguard"
+ingress: false
 arch:
   # - aarch64
   - amd64
@@ -35,23 +28,12 @@ schema:
 
   wireguard_own_IP: str
   wireguard_private_key: password
-
   wireguard_endpoint: str
   wireguard_public_key: str
   wireguard_allowed_IPs: [str]
-
-  ROUNDCUBEMAIL_database_url: str?
-  ROUNDCUBEMAIL_DEFAULT_HOST:
-    - str
-  ROUNDCUBEMAIL_SMTP_SERVER: str
-  ROUNDCUBEMAIL_PLUGINS: str?
-  ROUNDCUBEMAIL_SKIN: str?
-  ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: str?
-  ROUNDCUBEMAIL_SPELLCHECK_URI: str?
-  ROUNDCUBEMAIL_ASPELL_DICTS: str?
 options:
   heisenbridge_synapse_url: http://674b3982-matrixdotorg-synapse:8008/
-  heisenbridge_own_url: http://674b3982-wireguard-heisenbridge-webmail:9898/
+  heisenbridge_own_url: http://674b3982-hif1-heisenbridge-wireguard:9898/
   heisenbridge_owner_mxid: null
 
   wireguard_own_IP: null
@@ -59,13 +41,3 @@ options:
   wireguard_endpoint: null
   wireguard_public_key: null
   wireguard_allowed_IPs: null
-
-  ROUNDCUBEMAIL_database_url: ""
-  ROUNDCUBEMAIL_DEFAULT_HOST: []
-  # FIXME: Allow a named-array for SMTP_SERVER
-  ROUNDCUBEMAIL_SMTP_SERVER: "%h"
-  ROUNDCUBEMAIL_PLUGINS: ""
-  ROUNDCUBEMAIL_SKIN: ""
-  ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: ""
-  ROUNDCUBEMAIL_SPELLCHECK_URI: ""
-  ROUNDCUBEMAIL_ASPELL_DICTS: "en"

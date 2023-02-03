@@ -25,10 +25,3 @@ configuration:
   wireguard_allowed_IPs:
     name: "Wireguard allowed IPs"
     description: "[Peer] AllowedIPs"
-
-  signature:
-    name: "Email signature"
-
-  muttrc:
-    name: "Neomutt's config"
-    description: "Each list item is a separate line in ~/.muttrc"
