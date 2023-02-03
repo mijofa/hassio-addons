@@ -18,7 +18,7 @@ OPTIONS_FILE = pathlib.Path('/data/options.json')
 CONFIG_FILE = pathlib.Path('/data/homeserver.yaml')
 APPSERVICE_REGISTRATIONS_DIR = pathlib.Path('/share/matrix_appservices/')  # FIXME: Should this be configurable?
 HOMESERVER_YAML = pathlib.Path('/data/homeserver.yaml')
-ELEMENT_CONFIG_JSON = pathlib.Path('/usr/local/lib/python3.9/site-packages/synapse/static/config.json')
+ELEMENT_CONFIG_JSON = pathlib.Path('/usr/local/lib/python3.11/site-packages/synapse/static/config.json')
 
 
 def parse_dburl(url: str):
