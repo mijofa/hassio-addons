@@ -1,7 +1,7 @@
 # FIXME: There is an Alpine build available, consider switching to that.
 #        I confirmed it works alright, but was missing default Mutt config for colours and such.
 #        I could copy them in, but it's 2am and I CBFed.
-FROM hif1/heisenbridge:latest
+FROM hif1/heisenbridge:1.14.1
 
 # RUN apt update && \
 #     apt install -y --no-install-recommends wireguard-tools iproute2 python3-yaml
