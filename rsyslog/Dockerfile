@@ -4,7 +4,7 @@ FROM ${BUILD_FROM}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install Components
-RUN apk add --no-cache rsyslog
+RUN apk add --no-cache rsyslog rsyslog-relp
 
 # Copy data for add-on
 COPY rootfs /
