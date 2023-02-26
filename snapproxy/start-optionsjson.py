@@ -78,7 +78,6 @@ if __name__ == "__main__":
     snapserver_args = ['snapserver', '-c', '/etc/snapserver.conf']
 
     processes = {}
-    # FIXME: I should be setting environment variables for everything such that the fifo sink is the default
     snapserver = subprocess.Popen(snapserver_args)
     processes[snapserver.pid] = snapserver
 
@@ -116,8 +115,6 @@ if __name__ == "__main__":
           sep='\n', file=mpd_other.stdin, flush=True)
     mpd_other.stdin.close()
     processes[mpd_music.pid] = mpd_other
-
-    # FIXME: It'd be great if I could get Pulseaudio to do role-ducking instead of HA changing the volumes of each stream
 
     crashed = False
     while crashed is False:

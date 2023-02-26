@@ -19,6 +19,9 @@ TODO
 
   Then there can be a regular automation "cronjob" to just start the add-on every night,
   and the user/admin can manually add that config option and start the add-on themselves for explicit changes.
+  FIXME: Where the heck are the add-on configs stored?
+         I found the options.json files at /mnt/data/supervisor/addons/data but that's not canon,
+         it's generated on add-on start, and only intended to let apps/scripts inside the container see that config.
 
 * Give up on webmail (unless work updates Dovecot/Postfix), it's not worked for me.
   Remove it from the Heisenbridge add-on, and leave it just doing wireguard & heisenbridge.
