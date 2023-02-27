@@ -33,7 +33,7 @@ def detimestampmessage:
   . | sub("^ ?[0-9 :-]{19}(.[0-9]{3})?( - )? ?"; "") | sub("^"; " ") ;
 
 # Timestamp
-(.__REALTIME_TIMESTAMP | tonumber / 1000000 | strflocaltime("%b %d %H:%M:%S")) + " " +
+(.__REALTIME_TIMESTAMP | tonumber / 1000000 | strflocaltime("%FT%T")) + " " +
 # If the message is a json object, use it's data instead
 if .MESSAGE|convertmessage|type=="object" then
   .MESSAGE|convertmessage |
