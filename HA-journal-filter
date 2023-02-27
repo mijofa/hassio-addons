@@ -27,10 +27,11 @@ def convertmessage:
   . | if type=="array" then .|btostring else . end |
   if .|test("^{.*}$") then .|fromjson
   else . end
-  ;
+;
 
 def detimestampmessage:
-  . | sub("^ ?[0-9 :-]{19}(.[0-9]{3})?( - )? ?"; "") | sub("^"; " ") ;
+  . | sub("^ "; "") | sub("^ ?[0-9 :-]{19}(.[0-9]{3})?( - )? ?"; "")
+;
 
 # Timestamp
 (.__REALTIME_TIMESTAMP | tonumber / 1000000 | strflocaltime("%FT%T")) + " " +
@@ -40,7 +41,7 @@ if .MESSAGE|convertmessage|type=="object" then
     # Hostname
     .host + " " +
     # Service name
-    ."syslog-tag" + ":" +
+    (."syslog-tag"|sub(":$"; "")) + ": " +
     # Message
     (.message|detimestampmessage)
 else
