@@ -1,0 +1,58 @@
+# A lot of the logging from Home Assistant is actually a mess in the journal,
+# duplicated timestamps & container IDs.
+#
+# AND, I've got a plugin to include rsyslog messages which makes even more mess,
+# syslog messages as json objects.
+#
+# This jq filter is a way to read the logs without the headache:
+#   journalctl -fn$LINES --output json | jq --raw-output -f HA-journal-filter
+#
+# I suggest making a bash_alias for it
+#
+# ref: https://github.com/stedolan/jq/issues/907#issuecomment-360267611
+def btostring:
+  [foreach .[] as $item (
+    [0, 0] ;
+    if .[0] > 0 then [.[0] - 1, .[1] * 64 + ($item % 64)]
+    elif $item >= 240 then [3, $item % 8]
+    elif $item >= 224 then [2, $item % 16]
+    elif $item >= 192 then [1, $item % 32]
+    elif $item < 128 then [0, $item]
+    else error("Malformed UTF-8 bytes")
+    end ;
+    if .[0] == 0 then .[1] else empty end
+  )] | implode ;
+
+def convertmessage:
+  . | if type=="array" then .|btostring else . end |
+  if .|test("^{.*}$") then .|fromjson
+  else . end
+  ;
+
+def detimestampmessage:
+  . | sub("^ ?[0-9 :-]{19}(.[0-9]{3})?( - )? ?"; "") | sub("^"; " ") ;
+
+# Timestamp
+(.__REALTIME_TIMESTAMP | tonumber / 1000000 | strflocaltime("%b %d %H:%M:%S")) + " " +
+# If the message is a json object, use it's data instead
+if .MESSAGE|convertmessage|type=="object" then
+  .MESSAGE|convertmessage |
+    # Hostname
+    .host + " " +
+    # Service name
+    ."syslog-tag" + ":" +
+    # Message
+    (.message|detimestampmessage)
+else
+  # Hostname
+  ._HOSTNAME + " " + ( 
+  # Service name
+  if .CONTAINER_NAME then .CONTAINER_NAME + ( 
+    if .CONTAINER_ID then "[" + .CONTAINER_ID + "]" else "" end)
+  else .SYSLOG_IDENTIFIER + ( 
+    if ._PID then "[" + ._PID + "]" else "" end)
+  end) + ":" +
+  # Message
+  (.MESSAGE|convertmessage|detimestampmessage)
+# FIXME: What about journalctl's colouring?
+end
