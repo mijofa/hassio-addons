@@ -36,7 +36,16 @@ def detimestampmessage:
 # Timestamp
 (.__REALTIME_TIMESTAMP | tonumber / 1000000 | strflocaltime("%FT%T")) + " " +
 # If the message is a json object, use it's data instead
-if .MESSAGE|convertmessage|type=="object" then
+if .MESSAGE==null then
+  ._HOSTNAME + " " + ( 
+  # Service name
+  if .CONTAINER_NAME then .CONTAINER_NAME + ( 
+    if .CONTAINER_ID then "[" + .CONTAINER_ID + "]" else "" end)
+  else .SYSLOG_IDENTIFIER + ( 
+    if ._PID then "[" + ._PID + "]" else "" end)
+  end) + ": " +
+  "[EMPTY MESSAGE]"
+elif .MESSAGE|convertmessage|type=="object" then
   .MESSAGE|convertmessage |
     # Hostname
     .host + " " +
@@ -52,7 +61,7 @@ else
     if .CONTAINER_ID then "[" + .CONTAINER_ID + "]" else "" end)
   else .SYSLOG_IDENTIFIER + ( 
     if ._PID then "[" + ._PID + "]" else "" end)
-  end) + ":" +
+  end) + ": " +
   # Message
   (.MESSAGE|convertmessage|detimestampmessage)
 # FIXME: What about journalctl's colouring?
