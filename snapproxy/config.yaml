@@ -48,6 +48,8 @@ schema:
   logging_filter: str
   server_threads: int
   server_datadir: str
+
+  media_playlists_dir: str
 options:
   stream_sources:
     - pipe:///run/audio/snapfifo?sampleformat=48000:16:2&name=Pulseaudio
@@ -61,3 +63,5 @@ options:
   logging_filter: "*:info"
   server_threads: -1
   server_datadir: "/data/"
+
+  media_playlists_dir: "Playlists/"

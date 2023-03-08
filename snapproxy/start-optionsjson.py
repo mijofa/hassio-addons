@@ -19,7 +19,7 @@ if not OPTIONS_FILE.exists():
 HA_options = json.loads(OPTIONS_FILE.read_text())
 # FIXME: I can't use configparser because it doesn't allow for the duplicate source options I need to support
 # NOTE: The chr(10) here is a '\n', but since we can't do '\' in f-string expressions it's the best way I could get around that.
-config_template = f"""
+snap_config_template = f"""
 [server]
 threads = {HA_options['server_threads']}
 datadir = {HA_options['server_datadir']}
@@ -44,9 +44,25 @@ sink = stderr
 filter = {HA_options['logging_filter']}
 """
 
+# FIXME: This is kinda messy with the braces because I want to resolve the mpd_port later with .format()
+#        Which means not only do I need to resolve the literal {} here, but I need to escape it twice to make it through .format()
+mpd_config_template = f"""
+include "/etc/mpd.conf"
+music_directory "/media/"
+playlist_directory "/media/{HA_options['media_playlists_dir']}"
+audio_output {{{{
+   name          "Pulseaudio snapfifo for Snapcast"
+   type          "pulse"
+   sink          "snapfifo"
+#   mixer_type    "software"
+   media_role    "music"
+}}}}
+port "{{mpd_port}}"
+"""
+
 if __name__ == "__main__":
     print("Dumping config to config file", flush=True)
-    CONFIG_FILE.write_text(config_template)
+    CONFIG_FILE.write_text(snap_config_template)
 
     if not SECRET_FILE.exists():
         print("generating secret", flush=True)
@@ -86,17 +102,7 @@ if __name__ == "__main__":
 
     mpd_music = subprocess.Popen(['mpd', '--no-daemon', '/dev/stdin'], env={'PULSE_SINK': 'snapfifo'},
                                  stdin=subprocess.PIPE, text=True)
-    print('include "/etc/mpd.conf"',
-          'music_directory "/media/"',
-          'playlist_directory "/media/Playlists/"',
-          'audio_output {',
-          '   name          "Pulseaudio snapfifo for Snapcast"',
-          '   type          "pulse"',
-          '   sink          "snapfifo"',
-          # '   mixer_type    "software"',
-          '   media_role    "music"',
-          '}',
-          'port "6600"',
+    print(mpd_config_template.format(mpd_port=6600),
           sep='\n', file=mpd_music.stdin, flush=True)
     mpd_music.stdin.close()
     processes[mpd_music.pid] = mpd_music
@@ -105,17 +111,7 @@ if __name__ == "__main__":
     mpd_other = subprocess.Popen(['mpd', '--no-daemon', '/dev/stdin'], env={'PULSE_SINK': 'snapfifo'},
                                  stdin=subprocess.PIPE, text=True)
     # FIXME: Same as above except for port number, so make this a variable or something
-    print('include "/etc/mpd.conf"',
-          'music_directory "/media/"',
-          'playlist_directory "/media/Playlists/"',
-          'audio_output {',
-          '   name          "Pulseaudio snapfifo for Snapcast"',
-          '   type          "pulse"',
-          '   sink          "snapfifo"',
-          # '   mixer_type    "software"',
-          '   media_role    "event"',
-          '}',
-          'port "6601"',
+    print(mpd_config_template.format(mpd_port=6601),
           sep='\n', file=mpd_other.stdin, flush=True)
     mpd_other.stdin.close()
     processes[mpd_music.pid] = mpd_other

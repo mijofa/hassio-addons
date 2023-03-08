@@ -33,3 +33,6 @@ configuration:
 
   server_datadir:
     name: "Directory where persistent data is stored"
+
+  media_playlists_dir:
+    name: "Subdirectory of /media/ which mpd will use for reading & storing playlists (really just used to stop the errors in the log)"
