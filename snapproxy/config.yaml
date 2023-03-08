@@ -19,6 +19,7 @@ startup: services
 boot: auto
 map:
   - share:rw
+  - media:rw
 ingress: true
 ingress_port: 1780
 ingress_stream: true

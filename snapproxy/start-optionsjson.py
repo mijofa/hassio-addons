@@ -87,6 +87,8 @@ if __name__ == "__main__":
     mpd_music = subprocess.Popen(['mpd', '--no-daemon', '/dev/stdin'], env={'PULSE_SINK': 'snapfifo'},
                                  stdin=subprocess.PIPE, text=True)
     print('include "/etc/mpd.conf"',
+          'music_directory "/media/"',
+          'playlist_directory "/media/Playlists/"',
           'audio_output {',
           '   name          "Pulseaudio snapfifo for Snapcast"',
           '   type          "pulse"',
@@ -104,6 +106,8 @@ if __name__ == "__main__":
                                  stdin=subprocess.PIPE, text=True)
     # FIXME: Same as above except for port number, so make this a variable or something
     print('include "/etc/mpd.conf"',
+          'music_directory "/media/"',
+          'playlist_directory "/media/Playlists/"',
           'audio_output {',
           '   name          "Pulseaudio snapfifo for Snapcast"',
           '   type          "pulse"',
