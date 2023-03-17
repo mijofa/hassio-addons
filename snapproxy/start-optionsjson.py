@@ -55,7 +55,7 @@ audio_output {{{{
    type          "pulse"
    sink          "snapfifo"
 #   mixer_type    "software"
-   media_role    "music"
+   media_role    "{{pulse_role}}"
 }}}}
 port "{{mpd_port}}"
 """
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     mpd_music = subprocess.Popen(['mpd', '--no-daemon', '/dev/stdin'], env={'PULSE_SINK': 'snapfifo'},
                                  stdin=subprocess.PIPE, text=True)
-    print(mpd_config_template.format(mpd_port=6600),
+    print(mpd_config_template.format(mpd_port=6600, pulse_role='music'),
           sep='\n', file=mpd_music.stdin, flush=True)
     mpd_music.stdin.close()
     processes[mpd_music.pid] = mpd_music
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     mpd_other = subprocess.Popen(['mpd', '--no-daemon', '/dev/stdin'], env={'PULSE_SINK': 'snapfifo'},
                                  stdin=subprocess.PIPE, text=True)
     # FIXME: Same as above except for port number, so make this a variable or something
-    print(mpd_config_template.format(mpd_port=6601),
+    print(mpd_config_template.format(mpd_port=6601, pulse_role='event'),
           sep='\n', file=mpd_other.stdin, flush=True)
     mpd_other.stdin.close()
     processes[mpd_music.pid] = mpd_other
