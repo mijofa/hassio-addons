@@ -99,12 +99,12 @@ if __name__ == "__main__":
         admin_username = snappymail_config.get('security', 'admin_username', fallback='').strip('"')
         admin_pass_hash = snappymail_config.get('security', 'admin_password', fallback='').strip('"')
         if HA_options['snappymail_admin_username'] == admin_username and admin_pass_hash and bcrypt.checkpw(
-                HA_options['snappymail_admin_password'], admin_pass_hash):
+                HA_options['snappymail_admin_password'].encode(), admin_pass_hash.encode()):
             # Configured file already good, carry on
             pass
         else:
-            admin_pass_hash = bcrypt.hashpw(HA_options['snappymail_admin_password'].encode(), bcrypt.gensalt())
-            snappymail_config['security']['admin_password'] = f'"{admin_pass_hash.decode()}"'
+            admin_pass_hash = bcrypt.hashpw(HA_options['snappymail_admin_password'].encode(), bcrypt.gensalt()).decode()
+            snappymail_config['security']['admin_password'] = f'"{admin_pass_hash}"'
             snappymail_config['security']['admin_username'] = f'"{HA_options["snappymail_admin_username"]}"'
             with SNAPPYMAIL_APP_CONFIG.open('w') as f:
                 snappymail_config.write(f)
