@@ -88,6 +88,9 @@ if __name__ == "__main__":
             SNAPPYMAIL_APP_CONFIG.parent.mkdir(parents=True)
             SNAPPYMAIL_APP_CONFIG.write_bytes(
                 pathlib.Path('/usr/local/include/application.ini').read_bytes())
+            # Fix the ownership so that snappymail can actually use these dirs/files
+            for p in SNAPPYMAIL_APP_CONFIG.relative_to(SNAPPYMAIL_CONFIG_DIR).parents:
+                os.chown(SNAPPYMAIL_CONFIG_DIR / p, int(snappymail_env['UID']), int(snappymail_env['GID']))
 
         pathlib.Path('/snappymail/data/_data_/').symlink_to(SNAPPYMAIL_CONFIG_DIR)
         snappymail_config = configparser.ConfigParser()
@@ -105,6 +108,8 @@ if __name__ == "__main__":
             snappymail_config['security']['admin_username'] = f'"{HA_options["snappymail_admin_username"]}"'
             with SNAPPYMAIL_APP_CONFIG.open('w') as f:
                 snappymail_config.write(f)
+            # Fix the ownership so that snappymail can still edit this file
+            os.chown(snappymail_config, int(snappymail_env['UID']), int(snappymail_env['GID']))
 
         print('Starting Wireguard interface.', flush=True)
         subprocess.check_call(['wg-quick', 'up', 'wg0'])
