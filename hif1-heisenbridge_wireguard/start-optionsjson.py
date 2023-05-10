@@ -20,6 +20,7 @@ ROUNDCUBE_CONFIG = pathlib.Path('/var/www/html/config/config.docker.inc.php')
 CONFIG_DIR = pathlib.Path('/data/config')
 DB_DIR = pathlib.Path('/data/db')
 
+SNAPPYMAIL_PASSFILE = pathlib.Path('/snappymail/data/_data_/_default_/admin_password.txt')
 
 if not OPTIONS_FILE.exists():
     raise Exception("No /data/options.json file")
@@ -101,6 +102,10 @@ if __name__ == "__main__":
         print('Starting SnappyMail with env:', snappymail_env, flush=True)
         snappymail = subprocess.Popen(['/entrypoint.sh'], env=snappymail_env)
         processes[snappymail.pid] = snappymail
+
+        if SNAPPYMAIL_PASSFILE.exists():
+            print('Snappymail default admin password is:', SNAPPYMAIL_PASSFILE.read(), flush=True)
+            print('Change it ASAP')
 
         crashed = False
         while crashed is False:
