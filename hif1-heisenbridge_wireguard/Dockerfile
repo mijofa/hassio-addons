@@ -17,6 +17,8 @@ RUN printf '%s\n' >>/etc/nginx/fastcgi_params \
 # Seems X-Frame-Options is set to DENY by default, let's mess with that too
 # FIXME: What about other HSTS/CSP/CORS/etc headers?
 RUN sed --in-place "/\s*listen\s\+8888\s*;/a# Make this work in an iFrame for HA's Ingress\nadd_header X-Frame-Options \"SAMEORIGIN\";" /etc/nginx/nginx.conf
+# Seems to be something wrong with reading the manifest.json file through Ingress
+RUN sed --in-place '/link rel="manifest"/s/>$/ crossorigin="use-credentials">/' /snappymail/snappymail/v/*/app/templates/Index.html
 
 # Built in entrypoint doesn't really support Home Assistant's config system,
 # or running Heisenbridge as well.
