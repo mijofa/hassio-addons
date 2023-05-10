@@ -9,7 +9,10 @@ RUN apt update && \
 # (This seems to be a PHPism, since it was the same in RoundCube)
 # Home Assistant's Ingress is trying to be clever by hiding the real request URI from the called web app.
 # These 2 things conflict and break everything.
-# Ingress does helplfully include an X-Ingress-Path header though, so let's trick the PHP parts into adding that to the request URI.
+# Ingress does helplfully include an X-Ingress-Path header though, so let's trick the fastcgi & PHP parts into understanding that.
+RUN printf '%s\n' >>/etc/nginx/fastcgi_params \
+        "# Add support for Home Assistant's Ingress feature" \
+        'fastcgi_param  SCRIPT_NAME        $http_X_INGRESS_PATH/$fastcgi_script_name;'
 RUN echo 'auto_prepend_file=/usr/local/etc/php/ingress-fix-prepend.php' >/usr/local/etc/php/conf.d/ingress-fix.ini && \
     printf '%s\n' >/usr/local/etc/php/ingress-fix-prepend.php \
         '<?php if (isset($_SERVER["REQUEST_URI"]) AND isset($_SERVER["HTTP_X_INGRESS_PATH"])) {' \
