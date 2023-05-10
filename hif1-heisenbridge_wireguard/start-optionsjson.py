@@ -96,7 +96,7 @@ if __name__ == "__main__":
         snappymail_config = configparser.ConfigParser()
         snappymail_config.read(SNAPPYMAIL_APP_CONFIG)
 
-        admin_username = snappymail_config.get('security', 'admin_username', fallback='').strip('"')
+        admin_username = snappymail_config.get('security', 'admin_login', fallback='').strip('"')
         admin_pass_hash = snappymail_config.get('security', 'admin_password', fallback='').strip('"')
         if HA_options['snappymail_admin_username'] == admin_username and admin_pass_hash and bcrypt.checkpw(
                 HA_options['snappymail_admin_password'].encode(), admin_pass_hash.encode()):
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         else:
             admin_pass_hash = bcrypt.hashpw(HA_options['snappymail_admin_password'].encode(), bcrypt.gensalt()).decode()
             snappymail_config['security']['admin_password'] = f'"{admin_pass_hash}"'
-            snappymail_config['security']['admin_username'] = f'"{HA_options["snappymail_admin_username"]}"'
+            snappymail_config['security']['admin_login'] = f'"{HA_options["snappymail_admin_username"]}"'
             with SNAPPYMAIL_APP_CONFIG.open('w') as f:
                 snappymail_config.write(f)
             # Fix the ownership so that snappymail can still edit this file

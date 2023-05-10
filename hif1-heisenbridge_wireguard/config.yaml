@@ -2,7 +2,7 @@ name: "Matrix Heisenbridge, with Wireguard"
 description: >-
   Add-on wrapper for hif1/heisenbridge, with included Wireguard support. Intended for use with work's VPN to assist with work communications
 url: "https://github.com/mijofa/hassio-addons/tree/master/hif1-heisenbridge_wireguard"
-version: "0.5.14"
+version: "0.5.15"
 slug: "hif1-heisenbridge_wireguard"
 ingress: true
 ingress_port: 8888
@@ -54,6 +54,7 @@ options:
   wireguard_public_key: null
   wireguard_allowed_IPs: null
 
+  # NOTE: This is referred to as "admin_login" in the snappymail config, but I think that's too ambigious
   snappymail_admin_username: admin
   snappymail_admin_password: null
 
