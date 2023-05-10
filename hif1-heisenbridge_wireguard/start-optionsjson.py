@@ -109,7 +109,7 @@ if __name__ == "__main__":
             with SNAPPYMAIL_APP_CONFIG.open('w') as f:
                 snappymail_config.write(f)
             # Fix the ownership so that snappymail can still edit this file
-            os.chown(snappymail_config, int(snappymail_env['UID']), int(snappymail_env['GID']))
+            os.chown(SNAPPYMAIL_APP_CONFIG, int(snappymail_env['UID']), int(snappymail_env['GID']))
 
         print('Starting Wireguard interface.', flush=True)
         subprocess.check_call(['wg-quick', 'up', 'wg0'])
