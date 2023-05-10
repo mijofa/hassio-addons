@@ -1,15 +1,13 @@
-# FIXME: There is an Alpine build available, consider switching to that.
-#        I confirmed it works alright, but was missing default Mutt config for colours and such.
-#        I could copy them in, but it's 2am and I CBFed.
-FROM hif1/heisenbridge:1.14.1
+FROM kouinkouin/snappymail:2.27.3
 
-# RUN apt update && \
-#     apt install -y --no-install-recommends wireguard-tools iproute2 python3-yaml
-RUN apk add wireguard-tools iproute2 py3-yaml py3-pip
+RUN apt update && \
+    apt install -y --no-install-recommends wireguard-tools iproute2 python3-yaml python3-pip && \
+    python3 -m pip install heisenbridge
+#RUN apk add wireguard-tools iproute2 py3-yaml py3-pip
 
-# heisenbridge's ENTRYPOINT is ["heisenbridge", "-l", "0.0.0.0"] with a CMD of []
-# But I *also* want to run Heisenbridge.
-# This wrapper script does that, and handles the /data/options.json file
+# Built in entrypoint doesn't really support Home Assistant's config system,
+# or running Heisenbridge as well.
+# This wrapper script handles reading /data/options.json and running the entrypoint accordingly
 COPY start-optionsjson.py /
 ENTRYPOINT ["/start-optionsjson.py"]
 CMD []

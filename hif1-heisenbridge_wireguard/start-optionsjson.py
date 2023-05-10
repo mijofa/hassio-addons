@@ -30,6 +30,34 @@ HA_options = json.loads(OPTIONS_FILE.read_text())
 heisenbridge_args = ['--config', str(REGISTRATION_FILE), '--listen-address', '0.0.0.0',
                      '--owner', HA_options['heisenbridge_owner_mxid'], HA_options['heisenbridge_synapse_url']]
 
+# PHPIZE_DEPS=$'autoconf \t\tdpkg-dev \t\tfile \t\tg++ \t\tgcc \t\tlibc-dev \t\tmake \t\tpkg-config \t\tre2c'
+# PHP_ASC_URL=https://www.php.net/distributions/php-8.1.17.tar.xz.asc
+# PHP_CFLAGS='-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'
+# PHP_CPPFLAGS='-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64'
+# PHP_INI_DIR=/usr/local/etc/php
+# PHP_LDFLAGS='-Wl,-O1 -pie'
+# PHP_SHA256=b5c48f95b8e1d8624dd05fc2eab7be13277f9a203ccba97bdca5a1a0fb4a1460
+# PHP_URL=https://www.php.net/distributions/php-8.1.17.tar.xz
+# PHP_VERSION=8.1.17
+
+# NOTE: Don't use ints or booleans, only strings.
+snappymail_env = {
+    # FIXME: Will this actually work?
+    # # Inherit from the actual environment, for various upstream defaults (specifically the PHP vars)
+    # **os.environ,
+
+    'LOG_TO_STDERR': 'true',  # No point configuring this, always do logging
+    'SECURE_COOKIES': 'true',  # Does this cause problems with HA's ingress?
+
+    # FIXME: Make these configurable?
+    'UPLOAD_MAX_SIZE': '25M',
+    'MEMORY_LIMIT': '128M',
+
+    # Don't make these configurable, I'm only even setting them in the first place because the entrypoint.sh script needs them
+    'UID': '991',
+    'GID': '991',
+}
+
 
 if __name__ == "__main__":
     # Generate registration.yaml if it doesn't already exist
@@ -69,6 +97,10 @@ if __name__ == "__main__":
         print('Starting Heisenbridge with command:', ['heisenbridge', *heisenbridge_args], flush=True)
         heisenbridge = subprocess.Popen(['heisenbridge', *heisenbridge_args])
         processes[heisenbridge.pid] = heisenbridge
+
+        print('Starting SnappyMail with env:', snappymail_env, flush=True)
+        snappymail = subprocess.Popen(['/entrypoint.sh'], env=snappymail_env)
+        processes[snappymail.pid] = snappymail
 
         crashed = False
         while crashed is False:
