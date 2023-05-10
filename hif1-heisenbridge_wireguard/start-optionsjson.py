@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 """Small wrapper for the base upstream startup script to read config from Home Assistant's /data/options.json."""
+import configparser
 import json
 import os
 import pathlib
@@ -8,6 +9,7 @@ import socket
 import subprocess
 import sys
 
+import bcrypt
 import yaml
 
 OPTIONS_FILE = pathlib.Path('/data/options.json')
@@ -15,12 +17,8 @@ WIREGUARD_CONF = pathlib.Path('/etc/wireguard/wg0.conf')
 REGISTRATION_FILE = (pathlib.Path('/share/matrix_appservices/') / socket.gethostname()).with_suffix('.yaml')
 ROUNDCUBE_CONFIG = pathlib.Path('/var/www/html/config/config.docker.inc.php')
 
-# I've symlinked some Roundcube directories into /data, but now Roundcube expects them to exist first
-# FIXME: Is it safe to just symlink them to /data directly?
-CONFIG_DIR = pathlib.Path('/data/config')
-DB_DIR = pathlib.Path('/data/db')
-
-SNAPPYMAIL_PASSFILE = pathlib.Path('/snappymail/data/_data_/_default_/admin_password.txt')
+SNAPPYMAIL_CONFIG_DIR = pathlib.Path('/data/snappymail_data_')
+SNAPPYMAIL_APP_CONFIG = SNAPPYMAIL_CONFIG_DIR / '_default_/configs/application.ini'
 
 if not OPTIONS_FILE.exists():
     raise Exception("No /data/options.json file")
@@ -51,8 +49,8 @@ snappymail_env = {
     'SECURE_COOKIES': 'true',  # Does this cause problems with HA's ingress?
 
     # FIXME: Make these configurable?
-    'UPLOAD_MAX_SIZE': '25M',
-    'MEMORY_LIMIT': '128M',
+    'UPLOAD_MAX_SIZE': HA_options.get('snappymail_UPLOAD_MAX_SIZE', '25M'),
+    'MEMORY_LIMIT': HA_options.get('snappymail_MEMORY_LIMIT', '128M'),
 
     # Don't make these configurable, I'm only even setting them in the first place because the entrypoint.sh script needs them
     'UID': '991',
@@ -83,10 +81,30 @@ if __name__ == "__main__":
                 "AllowedIPs = {joined_wireguard_allowed_IPs}",
             )).format(**HA_options, joined_wireguard_allowed_IPs=', '.join(HA_options['wireguard_allowed_IPs'])))
 
-        if not DB_DIR.exists():
-            DB_DIR.mkdir()
-        if not CONFIG_DIR.exists():
-            CONFIG_DIR.mkdir()
+        print('Writing SnappyMail config file(s)')
+        if not SNAPPYMAIL_APP_CONFIG.exists():
+            # NOTE: This would be done in the entrypoint.sh,
+            #       except I need to set the admin password **before** that.
+            SNAPPYMAIL_APP_CONFIG.parent.mkdir(parents=True)
+            SNAPPYMAIL_APP_CONFIG.write_bytes(
+                pathlib.Path('/usr/local/include/application.ini').read_bytes())
+
+        pathlib.Path('/snappymail/data/_data_/').symlink_to(SNAPPYMAIL_CONFIG_DIR)
+        snappymail_config = configparser.ConfigParser()
+        snappymail_config.read(SNAPPYMAIL_APP_CONFIG)
+
+        admin_username = snappymail_config.get('security', 'admin_username', fallback='').strip('"')
+        admin_pass_hash = snappymail_config.get('security', 'admin_password', fallback='').strip('"')
+        if HA_options['snappymail_admin_username'] == admin_username and admin_pass_hash and bcrypt.checkpw(
+                HA_options['snappymail_admin_password'], admin_pass_hash):
+            # Configured file already good, carry on
+            pass
+        else:
+            admin_pass_hash = bcrypt.hashpw(HA_options['snappymail_admin_password'].encode(), bcrypt.gensalt())
+            snappymail_config['security']['admin_password'] = f'"{admin_pass_hash.decode()}"'
+            snappymail_config['security']['admin_username'] = f'"{HA_options["snappymail_admin_username"]}"'
+            with SNAPPYMAIL_APP_CONFIG.open('w') as f:
+                snappymail_config.write(f)
 
         print('Starting Wireguard interface.', flush=True)
         subprocess.check_call(['wg-quick', 'up', 'wg0'])
@@ -99,13 +117,10 @@ if __name__ == "__main__":
         heisenbridge = subprocess.Popen(['heisenbridge', *heisenbridge_args])
         processes[heisenbridge.pid] = heisenbridge
 
+        # SnappyMail doesn't require the VPN for startup, and can take a while to get itself settled.
         print('Starting SnappyMail with env:', snappymail_env, flush=True)
         snappymail = subprocess.Popen(['/entrypoint.sh'], env=snappymail_env)
         processes[snappymail.pid] = snappymail
-
-        if SNAPPYMAIL_PASSFILE.exists():
-            print('Snappymail default admin password is:', SNAPPYMAIL_PASSFILE.read(), flush=True)
-            print('Change it ASAP')
 
         crashed = False
         while crashed is False:
