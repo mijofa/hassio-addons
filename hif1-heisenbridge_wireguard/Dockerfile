@@ -4,6 +4,7 @@ RUN apt update && \
     apt install -y --no-install-recommends wireguard-tools iproute2 python3-yaml python3-pip && \
     apt install -y --no-install-recommends python3-bcrypt && \
     python3 -m pip install heisenbridge
+RUN rm -rf /var/lib/apt/lists/*
 #RUN apk add wireguard-tools iproute2 py3-yaml py3-pip
 
 # SnappyMail has a bunch of absolute URLs, but it tries to be clever about them and generates them based on the path in the request URI.
@@ -35,8 +36,10 @@ RUN printf '%s\n' >/etc/nginx/ingress_redirect-security_headers.conf \
 # Since the SnappyMail dockerfile overwrites nginx.conf, I have to add my own include line instead of relying on conf.d
 RUN sed --in-place '$i\ \ include /etc/nginx/ingress_redirect-security_headers.conf;' /etc/nginx/nginx.conf
 
-# Manifest.json can't be read through Ingress because Ingress requires authentication credentials
-RUN sed --in-place '/link rel="manifest"/s/>$/ crossorigin="use-credentials">/' /snappymail/snappymail/v/*/app/templates/Index.html
+# Not relevant because we're doing a redirect instead of proxy_pass.
+# https://github.com/home-assistant/supervisor/issues/4290
+# # Manifest.json can't be read through Ingress because Ingress requires authentication credentials
+# RUN sed --in-place '/link rel="manifest"/s/>$/ crossorigin="use-credentials">/' /snappymail/snappymail/v/*/app/templates/Index.html
 
 # Built in entrypoint doesn't really support Home Assistant's config system,
 # or running Heisenbridge as well.
