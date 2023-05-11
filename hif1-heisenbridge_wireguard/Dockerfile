@@ -14,10 +14,29 @@ RUN apt update && \
 RUN printf '%s\n' >>/etc/nginx/fastcgi_params \
         "# Add support for Home Assistant's Ingress feature" \
         'fastcgi_param  SCRIPT_NAME        $http_X_INGRESS_PATH/$fastcgi_script_name;'
-# Seems X-Frame-Options is set to DENY by default, let's mess with that too
-# FIXME: What about other HSTS/CSP/CORS/etc headers?
-RUN sed --in-place "/\s*listen\s\+8888\s*;/a# Make this work in an iFrame for HA's Ingress\nadd_header X-Frame-Options \"SAMEORIGIN\";" /etc/nginx/nginx.conf
-# Seems to be something wrong with reading the manifest.json file through Ingress
+
+# SnappyMail's default nginx listener has some bad headers, and the cookie path is wrong.
+# Instead of trying to hack around changing that listener's config (which then messes with nginx_proxy redirect)
+# I can just add an extra listener that proxies back into that one.
+RUN printf '%s\n' >/etc/nginx/ingress_proxy.conf \
+        'server {' \
+        '  listen 8099;' \
+        "  # Make this work in an iFrame for HA's Ingress" \
+        '  add_header "X-Frame-Options" "SAMEORIGIN";' \
+        '  # add_header "Access-Control-Allow-Origin" "*";' \
+        '  # add_header "Access-Control-Allow-Credentials" "true";' \
+        '  location / {' \
+        "      # Proxy to SnappyMail's default Nginx listener" \
+        '      proxy_pass http://localhost:8888;' \
+        "      # Add the Ingress path to the cookie paths so they don't get sent to other HA add-ons" \
+        '      proxy_cookie_path / $http_X_INGRESS_PATH/;' \
+        '      # proxy_set_header Cookie $cookie_ingress_session;' \
+        '  }' \
+        '}'
+# Since the SnappyMail dockerfile overwrites nginx.conf, I have to add my own include line instead of relying on conf.d
+RUN sed --in-place '$i\ \ include /etc/nginx/ingress_proxy.conf;' /etc/nginx/nginx.conf
+
+# Manifest.json can't be read through Ingress because Ingress requires authentication credentials
 RUN sed --in-place '/link rel="manifest"/s/>$/ crossorigin="use-credentials">/' /snappymail/snappymail/v/*/app/templates/Index.html
 
 # Built in entrypoint doesn't really support Home Assistant's config system,
