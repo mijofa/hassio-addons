@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """Small wrapper for the base upstream startup script to read config from Home Assistant's /data/options.json."""
 import configparser
+import fileinput
 import json
 import os
 import pathlib
@@ -95,6 +96,12 @@ if __name__ == "__main__":
         pathlib.Path('/snappymail/data/_data_/').symlink_to(SNAPPYMAIL_CONFIG_DIR)
         snappymail_config = configparser.ConfigParser()
         snappymail_config.read(SNAPPYMAIL_APP_CONFIG)
+
+        frame_ancestors = HA_options.get('snappymail_frame-ancestors', "'none'")
+        print(f'Patching Nginx config for frame-ancestors: {frame_ancestors}')
+        with fileinput.input(pathlib.Path('/etc/nginx/ingress_redirect-security_headers.conf'), inplace=True) as f:
+            for line in f:
+                print(line.replace('{{REPLACEME_FRAME_ANCESTOR}}', frame_ancestors), end='')
 
         admin_username = snappymail_config.get('security', 'admin_login', fallback='').strip('"')
         admin_pass_hash = snappymail_config.get('security', 'admin_password', fallback='').strip('"')

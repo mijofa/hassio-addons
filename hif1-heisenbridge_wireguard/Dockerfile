@@ -18,23 +18,22 @@ RUN printf '%s\n' >>/etc/nginx/fastcgi_params \
 # SnappyMail's default nginx listener has some bad headers, and the cookie path is wrong.
 # Instead of trying to hack around changing that listener's config (which then messes with nginx_proxy redirect)
 # I can just add an extra listener that proxies back into that one.
-RUN printf '%s\n' >/etc/nginx/ingress_proxy.conf \
-        'server {' \
-        '  listen 8099;' \
-        "  # Make this work in an iFrame for HA's Ingress" \
-        '  add_header "X-Frame-Options" "SAMEORIGIN";' \
-        '  # add_header "Access-Control-Allow-Origin" "*";' \
-        '  # add_header "Access-Control-Allow-Credentials" "true";' \
-        '  location / {' \
-        "      # Proxy to SnappyMail's default Nginx listener" \
-        '      proxy_pass http://localhost:8888;' \
-        "      # Add the Ingress path to the cookie paths so they don't get sent to other HA add-ons" \
-        '      proxy_cookie_path / $http_X_INGRESS_PATH/;' \
-        '      # proxy_set_header Cookie $cookie_ingress_session;' \
-        '  }' \
-        '}'
+RUN printf '%s\n' >/etc/nginx/ingress_redirect-security_headers.conf \
+        '# The fcgi app is setting "X-Frame-Options: DENY", which breaks Ingress' \
+        'fastcgi_hide_header "X-Frame-Options";' \
+        "# SAMEORIGIN isn't good enough though, because we're redirecting to a separate cname" \
+        '# add_header "X-Frame-Options" "SAMEORIGIN";' \
+        'add_header "Content-Security-Policy" "frame-ancestors {{REPLACEME_FRAME_ANCESTOR}};" always;' \
+        "# I don't have good reason for each of these, I just copied them from upstream: https://github.com/the-djmaze/snappymail/wiki/Installation-instructions#nginx" \
+        'add_header Strict-Transport-Security "max-age=15768000; includeSubDomains; preload;" always;' \
+        'add_header X-Content-Type-Options "nosniff" always;' \
+        'add_header X-XSS-Protection "1; mode=block" always;' \
+        'add_header X-Robots-Tag "none" always;' \
+        'add_header X-Download-Options "noopen" always;' \
+        'add_header X-Permitted-Cross-Domain-Policies "none" always;' \
+        'add_header Referrer-Policy "no-referrer" always;'
 # Since the SnappyMail dockerfile overwrites nginx.conf, I have to add my own include line instead of relying on conf.d
-RUN sed --in-place '$i\ \ include /etc/nginx/ingress_proxy.conf;' /etc/nginx/nginx.conf
+RUN sed --in-place '$i\ \ include /etc/nginx/ingress_redirect-security_headers.conf;' /etc/nginx/nginx.conf
 
 # Manifest.json can't be read through Ingress because Ingress requires authentication credentials
 RUN sed --in-place '/link rel="manifest"/s/>$/ crossorigin="use-credentials">/' /snappymail/snappymail/v/*/app/templates/Index.html
