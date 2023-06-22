@@ -1,4 +1,4 @@
-FROM kouinkouin/snappymail:2.27.3
+FROM kouinkouin/snappymail:2.28.2
 
 RUN apt update && \
     apt install -y --no-install-recommends wireguard-tools iproute2 python3-yaml python3-pip && \
