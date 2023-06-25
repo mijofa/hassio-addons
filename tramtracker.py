@@ -100,7 +100,12 @@ class TramTracker(object):
 
         form_data = urllib.parse.urlencode(kwargs).encode()
         with urllib.request.urlopen(tramtracker_url, data=form_data) as req:
-            response_data = json.load(req, cls=JSONDecoder)
+            data = req.read()
+            try:
+                response_data = json.loads(data, cls=JSONDecoder)
+            except:
+                print(data, file=sys.stderr)
+                raise
             # I've only seen 'HasError' with 'GetPassingRoutes' and 'GetStopInformation'
             assert 'hasError' in response_data or 'HasError' in response_data
             if (response_data.get('hasError')) or (response_data.get('HasError')):
@@ -214,7 +219,7 @@ if __name__ == '__main__':  # noqa: C901
         elif args.command == 'GetNextPredictionsForStop':
             if not args.stop_id:
                 argparser.error("Stop ID required for this command")
-            json.dump(TT.GetNextPredictionsForStop(stopNo=args.stop_id, routeNo=args.route_id),
+            json.dump(TT.GetNextPredictionsForStop(stopNo=args.stop_id, routeNo=args.route_id, isLowFloor=False),
                       cls=JSONEncoder,
                       indent=4, fp=sys.stdout)
         elif args.command == 'GetStopsByRouteAndDirection':
