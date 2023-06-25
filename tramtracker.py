@@ -27,7 +27,7 @@ argparser.add_argument('--base-url', type=str, default='http://tramtracker.com/C
                        help=argparse.SUPPRESS)
 
 
-def _date2str_serialiazer(input_date: datetime.datetime):
+def _date2str_serializer(input_date: datetime.datetime):
     """Convert a datetime object into a string for json serialization."""
     if not isinstance(input_date, datetime.datetime):
         raise TypeError(f'Object of type {input_date.__class__.__name__} is not JSON serializable')
@@ -198,16 +198,16 @@ if __name__ == '__main__':
     if args.command:
         if args.command == 'GetAllRoutes':
             json.dump(GetAllRoutes(), fp=sys.stdout,
-                      default=_date2str_serialiazer,  # Fallback serializer for objects that can't be JSON serialized
+                      default=_date2str_serializer,  # Fallback serializer for objects that can't be JSON serialized
                       indent=4,  # Avoids the need for pprint.pprint without breaking `|jq .`
                       )
         elif args.command == 'GetNextPredictionsForStop':
             json.dump(GetNextPredictionsForStop(stopNo=args.stop_id, routeNo=args.route_id), fp=sys.stdout,
-                      default=_date2str_serialiazer,  # Fallback serializer for objects that can't be JSON serialized
+                      default=_date2str_serializer,  # Fallback serializer for objects that can't be JSON serialized
                       indent=4,  # Avoids the need for pprint.pprint without breaking `|jq .`
                       )
         else:
-            raise NotImplementedError("Coming soon.")
+            raise NotImplementedError("Coming soon. Maybe")
         # FIXME: It's not as simple as: pprint.pprint(_tramtracker_query(args.command, stopNo=args.stop_id))
         #        because some endpoints require certain args even if empty, such as 'GetNextPredictionsForStop'.
         #        This is handled in the other calls by setting arg defaults in the Python functions,
@@ -217,7 +217,7 @@ if __name__ == '__main__':
         # FIXME: This should output as JSON, but I need to solve datetime serialization first.
         #        Home Assistant can fairly easily convert '.isoformat()' back into a usable datetime object.
         json.dump(stop_info(stop_id=args.stop_id), fp=sys.stdout,
-                  default=_date2str_serialiazer,  # Fallback serializer for objects that can't be JSON serialized
+                  default=_date2str_serializer,  # Fallback serializer for objects that can't be JSON serialized
                   indent=4,  # Avoids the need for pprint.pprint without breaking `|jq .`
                   )
     # pprint.pprint(GetPassingRoutes(s=args.stop_id))
