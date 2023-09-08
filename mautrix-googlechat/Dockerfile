@@ -1,4 +1,4 @@
-FROM dock.mau.dev/mautrix/googlechat:v0.4.0
+FROM dock.mau.dev/mautrix/googlechat:v0.5.0
 # NOTE: v0.4.0 enabled "appservice ephemeral events by default for new installations"
 #       looks like I already had that enabled myself though... weird
 
