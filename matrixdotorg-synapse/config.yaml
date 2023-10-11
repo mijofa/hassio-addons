@@ -2,7 +2,7 @@ name: "Matrix.org Synapse"
 description: >-
   Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.14"
+version: "0.0.15"
 slug: "matrixdotorg-synapse"
 ingress: true
 ingress_port: 8008
@@ -158,6 +158,9 @@ options:
 
     password_config:
        enabled: true
+
+    # Use this if some appservice's stop working during upgrade.
+    # use_appservice_legacy_authorization: true
 
 ## Possible environment variables
 # Mandatory config options:
