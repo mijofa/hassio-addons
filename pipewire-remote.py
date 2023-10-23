@@ -91,6 +91,7 @@ mqtt_client.loop_start()
 # FIXME: This doesn't seem to be working
 mqtt_client.will_set(topic=MQTT_TOPIC, payload='unavailable', retain=True)
 
+previous_payload = None
 playback_streams = {}
 output_sinks = {}
 for ev in pipewire_events():
@@ -114,16 +115,6 @@ for ev in pipewire_events():
                 print(ev['info']['state'],
                       ev['info']['props']['application.name'],
                       ev['info']['props'].get('media.role'))
-                if ev['info']['state'] == 'running':
-                    print("Triggering inhibitor")
-                    mqtt_client.publish(topic=MQTT_TOPIC,
-                                        payload='on',
-                                        retain=True)
-                elif ev['info']['state'] == 'idle':
-                    print("Releasing inhibitor")
-                    mqtt_client.publish(topic=MQTT_TOPIC,
-                                        payload='off',
-                                        retain=True)
             case 'Audio/Sink':
                 # Pretty sure this is output sinks
                 if 'params' not in ev['info']['change-mask']:
@@ -136,3 +127,14 @@ for ev in pipewire_events():
                       # FIXME: What math do I need for a single volume number?
                       ev['info']['params']['Props'][0]['volume'],
                       ev['info']['params']['Props'][0]['channelVolumes'])
+
+    if any((state == 'running' for state, props in playback_streams.values())):
+        payload = 'on'
+    else:
+        payload = 'off'
+    if payload != previous_payload:
+        print('MQTT>', MQTT_TOPIC, payload)
+        mqtt_client.publish(topic=MQTT_TOPIC,
+                            payload=payload,
+                            retain=True)
+        previous_payload = payload
