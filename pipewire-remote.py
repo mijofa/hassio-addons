@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 """Monitor pipewire state."""
-import json
-import subprocess
-import socket
 import dns.resolver
+import json
+import socket
+import subprocess
+import uuid
 
 import paho.mqtt.client
 
@@ -12,9 +13,40 @@ import paho.mqtt.client
 # FIXME: Set up Home Assistant's MQTT discovery per:
 #        https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery
 #        Instead of relying on a single static topic.
-MQTT_TOPIC = 'update/input_boolean/music_inhibitor_mqtt'
+# MQTT_TOPIC = 'update/input_boolean/music_inhibitor_mqtt'
 # FIXME: Handle this in Home Assistant
 PASSIVE_ROLES = ['Music']
+
+MQTT_TOPIC_BASE = f"homeassistant/binary_sensor/{socket.gethostname()}"
+AVAILABILITY_TOPIC = '/'.join((MQTT_TOPIC_BASE, "availability"))
+
+
+def mqtt_discovery(mqtt_client):
+    """Send MQTT discovery info for Home Assistant."""
+    # FIXME: Why do the DLNA & Nmap devices combine into one, but I can't make this combine with them?
+    mac_address = f'{uuid.getnode():02x}'
+    unique_id = ':'.join(mac_address[i:i + 2] for i in range(0, len(mac_address), 2))
+
+    # FIXME: Music inhibitor should be handled almost entirely by HA.
+    #        This should instead send what roles are currently playing and let HA decide.
+    mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "config")),
+                        payload=json.dumps({
+                            "availability_topic": AVAILABILITY_TOPIC,
+                            "device": {
+                                "connections": [("mac", unique_id)],
+                                "name": socket.gethostname()},
+                            "device_class": "sound",
+                            # "category": "config/diagnostic",  # FIXME: wtf is this?
+                            # "icon": "mdi:monitor-speaker",
+                            # FIXME: Not currently sending attributes anywhere
+                            "json_attributes_topic": '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "attributes")),
+                            "name": "Music Inhibitor",
+                            "state_topic": '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "state")),
+                            "unique_id": unique_id,  # FIXME: This should be unique to the entity, not the device.
+                        }),
+                        retain=True)
+
+    return '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "state"))
 
 
 def read_pretty_json_list(fp):
@@ -123,19 +155,22 @@ def connect_srv(mqtt_client, domain=None, *args, **kwargs):
 
 mqtt_client = paho.mqtt.client.Client()
 # NOTE: The will must be set before connecting.
-mqtt_client.will_set(topic=MQTT_TOPIC, payload='unavailable', retain=True)
+mqtt_client.will_set(topic=AVAILABILITY_TOPIC, payload='offline', retain=True)
 
 # FIXME: Try anonymous, and fallback on guest:guest when that fails
 mqtt_client.username_pw_set(username='guest', password='guest')
 connect_srv(mqtt_client)
 mqtt_client.loop_start()
 
-previous_payload = None
-playback_streams = {}
-output_sinks = {}
 # FIXME: Can I make this wait until after the first load of events is handled before first updating the payload?
 #        Because that first set of dumped events tends to bounce the inhibitor on/off annoyingly.
 # FIXME: Notify Systemd that we're ready, perhaps at the same time as ^ FIXME?
+mqtt_topic = mqtt_discovery(mqtt_client)
+mqtt_client.publish(topic=AVAILABILITY_TOPIC, payload='online', retain=False)
+
+previous_payload = None
+playback_streams = {}
+output_sinks = {}
 for ev in pipewire_events():
     if 'type' not in ev and ev.get('info') is None:
         # This is a node being removed, but we don't know what type of node
@@ -174,12 +209,12 @@ for ev in pipewire_events():
 
     if any((props.get('media.role') not in PASSIVE_ROLES for state, props in playback_streams.values()
             if state == 'running' for state, props in playback_streams.values())):
-        payload = 'on'
+        payload = 'ON'
     else:
-        payload = 'off'
+        payload = 'OFF'
     if payload != previous_payload:
-        print('MQTT>', MQTT_TOPIC, payload)
-        mqtt_client.publish(topic=MQTT_TOPIC,
+        print('MQTT>', mqtt_topic, payload)
+        mqtt_client.publish(topic=mqtt_topic,
                             payload=payload,
                             retain=True)
         previous_payload = payload
