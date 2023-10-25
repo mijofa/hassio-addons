@@ -47,7 +47,9 @@ def _vol_to_percentage(vol):
     # But I found someone else doing this with awk:
     # https://gist.github.com/venam/bd453b4fd673ff8abb9323e69f182045
     # and doing the same in Python has worked with everything I've thrown at it
-    return vol**(1 / 3)
+    # I added 'round' because It keeps giving me things like '0.5499878785207348',
+    # when pavucontrol says '55%'
+    return round(vol**(1 / 3), 2)
 
 
 def get_sink_state(sink_info):
@@ -59,8 +61,6 @@ def get_sink_state(sink_info):
     * The average volume across all channels
     * The name & volume of each channel
     """
-    print(sink_info['props']['node.name'],
-          sink_info['props']['node.description'])
     channels = {}
     for num, name in enumerate(sink_info['params']['Props'][0]['channelMap']):
         if sink_info['params']['Props'][0]['softVolumes'][num] != 1 and \
@@ -135,6 +135,7 @@ playback_streams = {}
 output_sinks = {}
 # FIXME: Can I make this wait until after the first load of events is handled before first updating the payload?
 #        Because that first set of dumped events tends to bounce the inhibitor on/off annoyingly.
+# FIXME: Notify Systemd that we're ready, perhaps at the same time as ^ FIXME?
 for ev in pipewire_events():
     if 'type' not in ev and ev.get('info') is None:
         # This is a node being removed, but we don't know what type of node
@@ -147,7 +148,10 @@ for ev in pipewire_events():
         match ev['info']['props'].get('media.class'):
             case 'Stream/Output/Audio':
                 # Pretty sure this is a playback stream.
-                if 'state' not in ev['info']['change-mask']:
+                if ev['info']['props'].get('node.passive', False) is True:
+                    # I've seen this with internal loopback & echo canceling modules.
+                    continue
+                elif 'state' not in ev['info']['change-mask']:
                     # Don't care about anything other than state changes
                     continue
 
