@@ -89,11 +89,15 @@ if __name__ == "__main__":
     subprocess.check_call(['pactl', 'set-default-sink', 'snapfifo'])
     os.environ['PULSE_SINK'] = 'snapfifo'
 
-    # FIXME: Can I do discovery for MPD or Snapcast?
+    processes = {}
+
+    # FIXME: I can't make Avahi work without dbus, and dbus is simply hanging on startup with no explanation
+    # # Avahi is needed for snapclients to discover this snapserver
+    # # FIXME: Does discovery work for MPD?
+    # avahi = subprocess.Popen(['avahi-daemon'])
+    # processes[avahi.pid] = avahi
 
     snapserver_args = ['snapserver', '-c', '/etc/snapserver.conf']
-
-    processes = {}
     snapserver = subprocess.Popen(snapserver_args)
     processes[snapserver.pid] = snapserver
 

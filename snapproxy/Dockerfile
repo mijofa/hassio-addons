@@ -5,6 +5,7 @@ FROM $BUILD_FROM
 ENV LANG C.UTF-8
 
 RUN apk add --no-cache snapcast patch pulseaudio-utils \
+                       avahi dbus \
                        mpd python3 && \
     setcap -r /usr/bin/mpd  # Docker containers don't get cap_sys_nice by default, so tell mpd not to try
 
@@ -13,4 +14,5 @@ COPY snapjs.patch /
 RUN patch -p0 -i /snapjs.patch
 
 COPY start-optionsjson.py /
-ENTRYPOINT ["/start-optionsjson.py"]
+#ENTRYPOINT ["/start-optionsjson.py"]
+CMD /start-optionsjson.py
