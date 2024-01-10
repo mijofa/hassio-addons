@@ -2,7 +2,7 @@ name: "Matrix.org Synapse"
 description: >-
   Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.17"
+version: "0.0.18"
 slug: "matrixdotorg-synapse"
 ingress: true
 ingress_port: 8008
