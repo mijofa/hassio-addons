@@ -1,4 +1,5 @@
-FROM kouinkouin/snappymail:2.29.1
+# FIXME: This isn't maintained anymore, switch to https://hub.docker.com/r/djmaze/snappymail/tags
+FROM kouinkouin/snappymail:2.29.2
 
 RUN apt update && \
     apt install -y --no-install-recommends wireguard-tools iproute2 python3-yaml python3-pip && \
