@@ -5,7 +5,7 @@ description: Create a WiFi access point to directly connect devices to Home Assi
 url: https://github.com/mijofa/hassio-access-point
 arch:
 - armhf
-- armv6
+- armv7
 - aarch64
 - amd64
 - i386
