@@ -1,0 +1,3 @@
+[submodule "Hassio-Access-Point"]
+	path = Hassio-Access-Point
+	url = https://github.com/mijofa/Hassio-Access-Point
