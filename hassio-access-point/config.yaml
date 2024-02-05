@@ -1,4 +1,5 @@
 name: Hass.io Access Point
+version: 0.0.0
 slug: hassio-access-point
 description: Create a WiFi access point to directly connect devices to Home Assistant
 url: https://github.com/mijofa/hassio-access-point
