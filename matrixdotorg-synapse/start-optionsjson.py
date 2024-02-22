@@ -18,6 +18,7 @@ OPTIONS_FILE = pathlib.Path('/data/options.json')
 CONFIG_FILE = pathlib.Path('/data/homeserver.yaml')
 APPSERVICE_REGISTRATIONS_DIR = pathlib.Path('/share/matrix_appservices/')  # FIXME: Should this be configurable?
 HOMESERVER_YAML = pathlib.Path('/data/homeserver.yaml')
+HOMESERVER_YAML_fordiff = pathlib.Path('/data/homeserver.yaml.custom')
 ELEMENT_CONFIG_JSON = pathlib.Path('/usr/local/lib/python3.11/site-packages/synapse/static/config.json')
 
 
@@ -129,6 +130,8 @@ if __name__ == "__main__":
 
     print("Overwriting homeserver.yaml with custom config", flush=True)
     HOMESERVER_YAML.write_text(yaml.dump(synapse_conf))
+    # Also write out to a separate file so that we can shell in and compare when Synapse makes changes itself
+    HOMESERVER_YAML_fordiff.write_text(yaml.dump(synapse_conf))
     print("Starting Synapse", flush=True)
     try:
         start.main(sys.argv, env_opts)
