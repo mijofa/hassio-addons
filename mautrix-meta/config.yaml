@@ -29,7 +29,7 @@ options:
   matrix_domain: null
   database_url: null
   synapse_url: http://674b3982-matrixdotorg-synapse:8008/
-  own_url: http://674b3982-mautrix-facebook:29319/
+  own_url: http://674b3982-mautrix-meta:29319/
 
   login_shared_secret: ""
 
