@@ -370,10 +370,10 @@ options:
         min_level: debug
         writers:
         - type: stdout
-        format: pretty-colored
+          format: pretty-colored
         - type: file
-        format: json
-        filename: ./logs/mautrix-meta.log
-        max_size: 100
-        max_backups: 10
-        compress: true
+          format: json
+          filename: ./logs/mautrix-meta.log
+          max_size: 100
+          max_backups: 10
+          compress: true
