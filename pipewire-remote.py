@@ -97,6 +97,8 @@ def get_sink_state(sink_info):
     for num, name in enumerate(sink_info['params']['Props'][0]['channelMap']):
         if sink_info['params']['Props'][0]['softVolumes'][num] != 1 and \
            sink_info['params']['Props'][0]['softVolumes'][num] != sink_info['params']['Props'][0]['channelVolumes'][num]:
+            # FIXME: I have now seen this in the wild, doesn't seem to happen with digital outputs, but can happen with analog ones
+            #        I'm seeing this with the Corsair HS55 Wireless, but only in Analog output profiles
             raise NotImplementedError("Not seen in testing")
         else:
             channels[name] = _vol_to_percentage(sink_info['params']['Props'][0]['channelVolumes'][num])
@@ -155,7 +157,7 @@ def connect_srv(mqtt_client, domain=None, *args, **kwargs):
 
 mqtt_client = paho.mqtt.client.Client()
 # NOTE: The will must be set before connecting.
-mqtt_client.will_set(topic=AVAILABILITY_TOPIC, payload='offline', retain=True)
+mqtt_client.will_set(topic=AVAILABILITY_TOPIC, payload='offline')
 
 # FIXME: Try anonymous, and fallback on guest:guest when that fails
 mqtt_client.username_pw_set(username='guest', password='guest')
@@ -218,3 +220,6 @@ for ev in pipewire_events():
                             payload=payload,
                             retain=True)
         previous_payload = payload
+
+    # Ping the availability topic in case HA has restarted and forgotten latest state
+    mqtt_client.publish(topic=AVAILABILITY_TOPIC, payload='online', retain=False)
