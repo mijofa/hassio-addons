@@ -1,0 +1,11 @@
+---
+configuration:
+  heisenbridge_owner_mxid:
+    name: "Owner MXID (eg: @user:example.net)"
+    description: "or first talking local user will claim the bridge"
+
+  heisenbridge_synapse_url:
+    name: "The URL this appservice should use to connect to the homeserver."
+
+  heisenbridge_own_url:
+    name: "The address that the homeserver can use to connect to this appservice."

@@ -1,0 +1,25 @@
+name: "Matrix Heisenbridge"
+description: >-
+  Add-on wrapper for hif1/heisenbridge
+url: "https://github.com/mijofa/hassio-addons/tree/master/hif1-heisenbridge"
+version: "0.1.0"
+slug: "hif1-heisenbridge"
+ingress: false
+arch:
+  # - aarch64
+  - amd64
+  # - armhf
+  # - armv7
+  # - i386
+
+map:
+  # Move the appservice registration.yaml file here so that the synapse container can see it
+  - share:rw
+schema:
+  heisenbridge_synapse_url: url
+  heisenbridge_own_url: url
+  heisenbridge_owner_mxid: str
+options:
+  heisenbridge_synapse_url: http://674b3982-matrixdotorg-synapse:8008/
+  heisenbridge_own_url: http://674b3982-hif1-heisenbridge:9898/
+  heisenbridge_owner_mxid: null
