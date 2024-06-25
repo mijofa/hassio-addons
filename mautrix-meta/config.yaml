@@ -2,7 +2,7 @@ name: "Mautrix Meta bridge"
 description: >-
   Pretty bare-bones add-on wrapper for the dock.mau.dev/mautrix/meta container
 url: "https://mau.dev/mautrix/meta"
-version: "0.0.2"
+version: "0.0.3"
 slug: "mautrix-meta"
 arch:
   # - aarch64
@@ -137,6 +137,10 @@ options:
         # HTTP endpoint to request new proxy address from, for dynamically assigned proxies.
         # The endpoint must return a JSON body with a string field called proxy_url.
         get_proxy_from:
+        # Minimum interval between full reconnects in seconds, default is 1 hour
+        min_full_reconnect_interval_seconds: 3600
+        # Interval to force refresh the connection (full reconnect), default is 1 day. Set 0 to disable force refreshes.
+        force_refresh_interval_seconds: 86400
 
     # Bridge config
     bridge:
@@ -231,6 +235,8 @@ options:
                 sleep_between_tasks: 20s
                 # Disable fetching XMA media (reels, stories, etc) when backfilling.
                 dont_fetch_xma: true
+        # Disable fetching XMA media entirely.
+        disable_xma: false
 
         # Messages sent upon joining a management room.
         # Markdown is supported. The defaults are listed below.

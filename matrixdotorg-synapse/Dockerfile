@@ -1,5 +1,5 @@
 # FIXME: Should this eventually be "element-hq"?
-FROM matrixdotorg/synapse:v1.105.0
+FROM matrixdotorg/synapse:v1.109.0
 # FIXME: Doing a huge version number jump, there's bound to be issues... right?
 #        1.65.0 -> 1.72.0 -> 1.96.1 -> 1.98.0
 
