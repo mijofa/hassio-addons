@@ -195,7 +195,7 @@ for ev in pipewire_events():
                 playback_streams[ev['id']] = (ev['info']['state'],
                                               ev['info']['props'])
                 print(ev['info']['state'], 'playback stream',
-                      ev['info']['props']['application.name'],
+                      ev['info']['props'].get('application.name'),
                       ev['info']['props'].get('media.role'))
             case 'Audio/Sink':
                 # Pretty sure this is output sinks
