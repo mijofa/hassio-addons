@@ -4,60 +4,80 @@ import dns.resolver
 import json
 import socket
 import subprocess
+import typing
 import uuid
 
 import paho.mqtt.client
 
 # FIXME: Make async I/O work
 
-# FIXME: Set up Home Assistant's MQTT discovery per:
-#        https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery
-#        Instead of relying on a single static topic.
-# MQTT_TOPIC = 'update/input_boolean/music_inhibitor_mqtt'
-# FIXME: Handle this in Home Assistant
-PASSIVE_ROLES = ['Music']
+# In my experience, the role can be whatever string I want it to be.
+# But in practice, it's barely actually used.
+# And in the documentation there's a limited number of options for it.
+# https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Clients/ApplicationProperties/#pa_prop_media_role
+PW_ROLE_NUM_STREAMS: dict[str, int] = {
+    # Should be ignored as this is what we're controling anyway.
+    "music": 0,
+    # Must mute the music and steal all attention
+    "phone": 0,
+    # Should probably dim the lights the same as TV inhibitor
+    "game": 0,
+    # Should this dim the lights? Probably not, this'll be YouTube videos and such
+    "video": 0,
+    # Chat notification blips, should this mute the music?
+    # Ideally, probably not.
+    # Realistically I probably can't differentiate it from 'phone' because I'm setting role at the application level.
+    "event": 0,
+    # I personally don't expect to use this one currently.
+    # It maybe shouldn't mute the music, but maybe lower the music volume.
+    "a11y": 0,
+    # Wtf, are these ever even gonna be used?
+    "animation": 0,
+    "production": 0,
+    # Not a real option, I'm just using this for anything that doesn't have a defined role
+    'other': 0
+}
 
-MQTT_TOPIC_BASE = f"homeassistant/binary_sensor/{socket.gethostname()}"
-AVAILABILITY_TOPIC = '/'.join((MQTT_TOPIC_BASE, "availability"))
+MQTT_TOPIC_BASE: str = f"homeassistant/binary_sensor/{socket.gethostname()}"
+AVAILABILITY_TOPIC: str = '/'.join((MQTT_TOPIC_BASE, "availability"))
 
 
 def mqtt_discovery(mqtt_client):
     """Send MQTT discovery info for Home Assistant."""
     # FIXME: Why do the DLNA & Nmap devices combine into one, but I can't make this combine with them?
-    mac_address = f'{uuid.getnode():02x}'
-    unique_id = ':'.join(mac_address[i:i + 2] for i in range(0, len(mac_address), 2))
+    mac_address: str = f'{uuid.getnode():02x}'
+    unique_id: str = ':'.join(mac_address[i:i + 2] for i in range(0, len(mac_address), 2))
 
-    # FIXME: Music inhibitor should be handled almost entirely by HA.
-    #        This should instead send what roles are currently playing and let HA decide.
-    mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "config")),
-                        payload=json.dumps({
-                            "availability_topic": AVAILABILITY_TOPIC,
-                            "device": {
-                                "connections": [("mac", unique_id)],
-                                "name": socket.gethostname()},
-                            "device_class": "sound",
-                            # "category": "config/diagnostic",  # FIXME: wtf is this?
-                            # "icon": "mdi:monitor-speaker",
-                            # FIXME: Not currently sending attributes anywhere
-                            "json_attributes_topic": '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "attributes")),
-                            "name": "Music Inhibitor",
-                            "state_topic": '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "state")),
-                            "unique_id": unique_id,  # FIXME: This should be unique to the entity, not the device.
-                        }),
-                        retain=True)
+    for role in PW_ROLE_NUM_STREAMS:
+        mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "config")),
+                            payload=json.dumps({
+                                "availability_topic": AVAILABILITY_TOPIC,
+                                "device": {
+                                    "connections": [("mac", unique_id)],
+                                    "name": socket.gethostname()},
+                                "device_class": "sound",
+                                # "category": "config/diagnostic",  # FIXME: wtf is this?
+                                # "icon": "mdi:monitor-speaker",
+                                # # FIXME: Not currently sending attributes anywhere
+                                # "json_attributes_topic": '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "attributes")),
+                                "name": f"Audio playback - {role}",
+                                "state_topic": '/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "state")),
+                                "unique_id": unique_id+role,  # FIXME: This should be unique to the entity, not the device.
+                            }),
+                            retain=True)
 
     return '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "state"))
 
 
-def read_pretty_json_list(fp):
+def read_pretty_json_list(fp: typing.TextIO):
     """Read & decode the next pretty-printed JSON list from file object."""
-    line = fp.readline()
+    line: str = fp.readline()
     if line != "[\n":
         raise NotImplementedError("Must start with a '['")
 
     json_string = line
     while line != "]\n":
-        line = fp.readline()
+        line: str = fp.readline()
         json_string += line
 
     return json.loads(json_string)
@@ -70,45 +90,6 @@ def pipewire_events():
     while pw_dump.poll() is None:
         for ev in read_pretty_json_list(pw_dump.stdout):
             yield ev
-
-
-def _vol_to_percentage(vol):
-    """Return the given volume as a percentage."""
-    # I don't understand what the input number actually is,
-    # or the math behind fixing this.
-    # But I found someone else doing this with awk:
-    # https://gist.github.com/venam/bd453b4fd673ff8abb9323e69f182045
-    # and doing the same in Python has worked with everything I've thrown at it
-    # I added 'round' because It keeps giving me things like '0.5499878785207348',
-    # when pavucontrol says '55%'
-    return round(vol**(1 / 3), 2)
-
-
-def get_sink_state(sink_info):
-    """
-    Get the current volume (as a percentage) from the given sink info.
-
-    Returns:
-    * True if muted, False if note
-    * The average volume across all channels
-    * The name & volume of each channel
-    """
-    channels = {}
-    for num, name in enumerate(sink_info['params']['Props'][0]['channelMap']):
-        if sink_info['params']['Props'][0]['softVolumes'][num] != 1 and \
-           sink_info['params']['Props'][0]['softVolumes'][num] != sink_info['params']['Props'][0]['channelVolumes'][num]:
-            # FIXME: I have now seen this in the wild, doesn't seem to happen with digital outputs, but can happen with analog ones
-            #        I'm seeing this with the Corsair HS55 Wireless, but only in Analog output profiles
-            raise NotImplementedError("Not seen in testing")
-        else:
-            channels[name] = _vol_to_percentage(sink_info['params']['Props'][0]['channelVolumes'][num])
-
-    # In testing I never saw 'softMute' be True,
-    # so I'm just kind of assuming how this works.
-    muted = sink_info['params']['Props'][0]['mute'] or sink_info['params']['Props'][0]['softMute']
-
-    return (muted, sum(channels.values()) / len(channels), channels)
-
 
 # Since upstream **still** hasn't fixed this 3yr old bug
 # https://github.com/eclipse/paho.mqtt.python/issues/493
@@ -170,17 +151,27 @@ mqtt_client.loop_start()
 mqtt_topic = mqtt_discovery(mqtt_client)
 mqtt_client.publish(topic=AVAILABILITY_TOPIC, payload='online', retain=False)
 
-previous_payload = None
-playback_streams = {}
-output_sinks = {}
+# Set everything to off before we get started
+for role in PW_ROLE_NUM_STREAMS:
+    mqtt_topic = '/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "state"))
+    mqtt_client.publish(topic=mqtt_topic,
+                        payload='OFF',
+                        retain=True)
+
+playback_streams: dict[int, str] = {}
 for ev in pipewire_events():
     if 'type' not in ev and ev.get('info') is None:
         # This is a node being removed, but we don't know what type of node
         if ev['id'] in playback_streams:
-            del playback_streams[ev['id']]
-        if ev['id'] in output_sinks:
-            del output_sinks[ev['id']]
-        # FIXME: Trigger an update of some sort.
+            stream_role = playback_streams.pop(ev['id'])
+            if stream_role in PW_ROLE_NUM_STREAMS:
+                print('del', stream_role)
+                PW_ROLE_NUM_STREAMS[stream_role] -= 1
+                if PW_ROLE_NUM_STREAMS[stream_role] == 0:
+                    mqtt_client.publish(topic=mqtt_topic,
+                                        payload='OFF',
+                                        retain=True)
+
     elif ev.get('type') == 'PipeWire:Interface:Node':
         match ev['info']['props'].get('media.class'):
             case 'Stream/Output/Audio':
@@ -191,35 +182,27 @@ for ev in pipewire_events():
                 elif 'state' not in ev['info']['change-mask']:
                     # Don't care about anything other than state changes
                     continue
+                if ev['info']['state'] != 'running':
+                    # FIXME: Why is this not relevant?
+                    continue
 
-                playback_streams[ev['id']] = (ev['info']['state'],
-                                              ev['info']['props'])
-                print(ev['info']['state'], 'playback stream',
-                      ev['info']['props'].get('application.name'),
-                      ev['info']['props'].get('media.role'))
+                # FIXME: WTF do I need '.lower()' here?
+                stream_role = ev['info']['props'].get('media.role', 'other').lower()
+                if stream_role in PW_ROLE_NUM_STREAMS:
+                    print('new', stream_role)
+                    mqtt_topic = '/'.join((MQTT_TOPIC_BASE, f"pipewire_{stream_role}", "state"))
+                    PW_ROLE_NUM_STREAMS[stream_role] += 1
+                    mqtt_client.publish(topic=mqtt_topic,
+                                        payload='ON',
+                                        retain=True)
+
+                # Keep record of what role this was so that we can track it on deletion
+                playback_streams[ev['id']] = stream_role
             case 'Audio/Sink':
                 # Pretty sure this is output sinks
                 if 'params' not in ev['info']['change-mask']:
                     # Don't care about changes outside of 'params'
                     continue
-
-                output_sinks[ev['id']] = (ev['info']['state'], get_sink_state(ev['info']))
-                print(ev['info']['state'], 'output sink',
-                      ev['info']['props']['node.description'],
-                      ev['info']['props']['node.name'],
-                      get_sink_state(ev['info']))
-
-    if any((props.get('media.role') not in PASSIVE_ROLES for state, props in playback_streams.values()
-            if state == 'running' for state, props in playback_streams.values())):
-        payload = 'ON'
-    else:
-        payload = 'OFF'
-    if payload != previous_payload:
-        print('MQTT>', mqtt_topic, payload)
-        mqtt_client.publish(topic=mqtt_topic,
-                            payload=payload,
-                            retain=True)
-        previous_payload = payload
 
     # Ping the availability topic in case HA has restarted and forgotten latest state
     mqtt_client.publish(topic=AVAILABILITY_TOPIC, payload='online', retain=False)
