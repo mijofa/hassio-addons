@@ -15,27 +15,31 @@ import paho.mqtt.client
 # But in practice, it's barely actually used.
 # And in the documentation there's a limited number of options for it.
 # https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Clients/ApplicationProperties/#pa_prop_media_role
-PW_ROLE_NUM_STREAMS: dict[str, int] = {
+PW_ROLE_NUM_STREAMS: dict[str, set] = {
     # Should be ignored as this is what we're controling anyway.
-    "music": 0,
+    "music": set(),
     # Must mute the music and steal all attention
-    "phone": 0,
+    "phone": set(),
     # Should probably dim the lights the same as TV inhibitor
-    "game": 0,
+    "game": set(),
     # Should this dim the lights? Probably not, this'll be YouTube videos and such
-    "video": 0,
+    "video": set(),
     # Chat notification blips, should this mute the music?
     # Ideally, probably not.
     # Realistically I probably can't differentiate it from 'phone' because I'm setting role at the application level.
-    "event": 0,
+    "event": set(),
     # I personally don't expect to use this one currently.
     # It maybe shouldn't mute the music, but maybe lower the music volume.
-    "a11y": 0,
+    "a11y": set(),
     # Wtf, are these ever even gonna be used?
-    "animation": 0,
-    "production": 0,
+    "animation": set(),
+    "production": set(),
+    # FIXME: Should this be phone?
+    #        This is what I'm seeing with Discord, even though I've set `Environment=PULSE_PROP="media.role=phone"`
+    "communication": set(),
     # Not a real option, I'm just using this for anything that doesn't have a defined role
-    'other': 0
+    # FIXME: Should probably use this for any roles that are not in this list either
+    'other': set(),
 }
 
 MQTT_TOPIC_BASE: str = f"homeassistant/binary_sensor/{socket.gethostname()}"
@@ -46,14 +50,14 @@ def mqtt_discovery(mqtt_client):
     """Send MQTT discovery info for Home Assistant."""
     # FIXME: Why do the DLNA & Nmap devices combine into one, but I can't make this combine with them?
     mac_address: str = f'{uuid.getnode():02x}'
-    unique_id: str = ':'.join(mac_address[i:i + 2] for i in range(0, len(mac_address), 2))
+    hex_mac: str = ':'.join(mac_address[i:i + 2] for i in range(0, len(mac_address), 2))
 
     for role in PW_ROLE_NUM_STREAMS:
         mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "config")),
                             payload=json.dumps({
                                 "availability_topic": AVAILABILITY_TOPIC,
                                 "device": {
-                                    "connections": [("mac", unique_id)],
+                                    "connections": [("mac", hex_mac)],
                                     "name": socket.gethostname()},
                                 "device_class": "sound",
                                 # "category": "config/diagnostic",  # FIXME: wtf is this?
@@ -62,7 +66,7 @@ def mqtt_discovery(mqtt_client):
                                 # "json_attributes_topic": '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "attributes")),
                                 "name": f"Audio playback - {role}",
                                 "state_topic": '/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "state")),
-                                "unique_id": unique_id+role,  # FIXME: This should be unique to the entity, not the device.
+                                "unique_id": 'pipewire'+hex_mac+role,
                             }),
                             retain=True)
 
@@ -163,11 +167,11 @@ for ev in pipewire_events():
     if 'type' not in ev and ev.get('info') is None:
         # This is a node being removed, but we don't know what type of node
         if ev['id'] in playback_streams:
-            stream_role = playback_streams.pop(ev['id'])
-            if stream_role in PW_ROLE_NUM_STREAMS:
-                print('del', stream_role)
-                PW_ROLE_NUM_STREAMS[stream_role] -= 1
-                if PW_ROLE_NUM_STREAMS[stream_role] == 0:
+            if (stream_role := playback_streams.pop(ev['id'])) in PW_ROLE_NUM_STREAMS:
+                PW_ROLE_NUM_STREAMS[stream_role].remove(ev['id'])
+                print(f"{ev['id']} - del {stream_role} stream,",
+                        f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}")
+                if len(PW_ROLE_NUM_STREAMS[stream_role]) == 0:
                     mqtt_client.publish(topic=mqtt_topic,
                                         payload='OFF',
                                         retain=True)
@@ -186,15 +190,19 @@ for ev in pipewire_events():
                     # FIXME: Why is this not relevant?
                     continue
 
-                # FIXME: WTF do I need '.lower()' here?
-                stream_role = ev['info']['props'].get('media.role', 'other').lower()
-                if stream_role in PW_ROLE_NUM_STREAMS:
-                    print('new', stream_role)
-                    mqtt_topic = '/'.join((MQTT_TOPIC_BASE, f"pipewire_{stream_role}", "state"))
-                    PW_ROLE_NUM_STREAMS[stream_role] += 1
-                    mqtt_client.publish(topic=mqtt_topic,
-                                        payload='ON',
-                                        retain=True)
+                # FIXME: WTF is this titlecased?
+                stream_role: str = ev['info']['props'].get('media.role', 'other').lower()
+                if stream_role not in PW_ROLE_NUM_STREAMS:
+                    stream_role = 'other'
+
+                mqtt_topic = '/'.join((MQTT_TOPIC_BASE, f"pipewire_{stream_role}", "state"))
+                PW_ROLE_NUM_STREAMS[stream_role].add(ev['id'])
+                print(f"{ev['id']} - new {stream_role} stream",
+                        f"{ev['info']['props'].get('node.name', ev['info']['props'].get('application.name', ev['info']['props'].get('application.process.binary')))}[{ev['info']['props'].get('application.process.id')}],",
+                        f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}")
+                mqtt_client.publish(topic=mqtt_topic,
+                                    payload='ON',
+                                    retain=True)
 
                 # Keep record of what role this was so that we can track it on deletion
                 playback_streams[ev['id']] = stream_role
