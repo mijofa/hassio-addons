@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 """Monitor pipewire state."""
-import dns.resolver
 import json
 import socket
 import subprocess
 import typing
 import uuid
 
+import dns.resolver
 import paho.mqtt.client
 
 # FIXME: Make async I/O work
@@ -90,8 +90,9 @@ def pipewire_events():
     pw_dump = subprocess.Popen(['pw-dump', '--monitor', '--no-colors'],
                                text=True, stdout=subprocess.PIPE)
     while pw_dump.poll() is None:
-        for ev in read_pretty_json_list(pw_dump.stdout):
-            yield ev
+        for event in read_pretty_json_list(pw_dump.stdout):
+            yield event
+
 
 # Since upstream **still** hasn't fixed this 3yr old bug
 # https://github.com/eclipse/paho.mqtt.python/issues/493
@@ -168,7 +169,8 @@ for ev in pipewire_events():
             if (stream_role := playback_streams.pop(ev['id'])) in PW_ROLE_NUM_STREAMS:
                 PW_ROLE_NUM_STREAMS[stream_role].remove(ev['id'])
                 print(f"{ev['id']} - del {stream_role} stream,",
-                        f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}")
+                      f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}",
+                      PW_ROLE_NUM_STREAMS[stream_role])
                 if len(PW_ROLE_NUM_STREAMS[stream_role]) == 0:
                     mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE, f"pipewire_{stream_role}", "state")),
                                         payload='OFF',
@@ -194,9 +196,13 @@ for ev in pipewire_events():
                     stream_role = 'other'
 
                 PW_ROLE_NUM_STREAMS[stream_role].add(ev['id'])
-                print(f"{ev['id']} - new {stream_role} stream",
-                        f"{ev['info']['props'].get('node.name', ev['info']['props'].get('application.name', ev['info']['props'].get('application.process.binary')))}[{ev['info']['props'].get('application.process.id')}],",
-                        f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}")
+                print(f"{ev['id']} - new {stream_role} stream ",
+                      ev['info']['props'].get('node.name',
+                                              ev['info']['props'].get('application.name',
+                                                                      ev['info']['props'].get('application.process.binary'))),
+                      f"[{ev['info']['props'].get('application.process.id')}], ",
+                      f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}",
+                      sep='')
                 mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE,
                                                     f"pipewire_{stream_role}",
                                                     "state")),
