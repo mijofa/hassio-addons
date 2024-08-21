@@ -46,31 +46,29 @@ MQTT_TOPIC_BASE: str = f"homeassistant/binary_sensor/{socket.gethostname()}"
 AVAILABILITY_TOPIC: str = '/'.join((MQTT_TOPIC_BASE, "availability"))
 
 
-def mqtt_discovery(mqtt_client):
+def mqtt_discovery(client: paho.mqtt.client.Client):
     """Send MQTT discovery info for Home Assistant."""
     # FIXME: Why do the DLNA & Nmap devices combine into one, but I can't make this combine with them?
     mac_address: str = f'{uuid.getnode():02x}'
     hex_mac: str = ':'.join(mac_address[i:i + 2] for i in range(0, len(mac_address), 2))
 
     for role in PW_ROLE_NUM_STREAMS:
-        mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "config")),
-                            payload=json.dumps({
-                                "availability_topic": AVAILABILITY_TOPIC,
-                                "device": {
-                                    "connections": [("mac", hex_mac)],
-                                    "name": socket.gethostname()},
-                                "device_class": "sound",
-                                # "category": "config/diagnostic",  # FIXME: wtf is this?
-                                # "icon": "mdi:monitor-speaker",
-                                # # FIXME: Not currently sending attributes anywhere
-                                # "json_attributes_topic": '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "attributes")),
-                                "name": f"Audio playback - {role}",
-                                "state_topic": '/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "state")),
-                                "unique_id": 'pipewire'+hex_mac+role,
-                            }),
-                            retain=True)
-
-    return '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "state"))
+        client.publish(topic='/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "config")),
+                       payload=json.dumps({
+                           "availability_topic": AVAILABILITY_TOPIC,
+                           "device": {
+                               "connections": [("mac", hex_mac)],
+                               "name": socket.gethostname()},
+                           "device_class": "sound",
+                           # "category": "config/diagnostic",  # FIXME: wtf is this?
+                           # "icon": "mdi:monitor-speaker",
+                           # # FIXME: Not currently sending attributes anywhere
+                           # "json_attributes_topic": '/'.join((MQTT_TOPIC_BASE, "music_inhibitor", "attributes")),
+                           "name": f"Audio playback - {role}",
+                           "state_topic": '/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "state")),
+                           "unique_id": 'pipewire'+hex_mac+role,
+                       }),
+                       retain=True)
 
 
 def read_pretty_json_list(fp: typing.TextIO):
@@ -152,16 +150,16 @@ mqtt_client.loop_start()
 # FIXME: Can I make this wait until after the first load of events is handled before first updating the payload?
 #        Because that first set of dumped events tends to bounce the inhibitor on/off annoyingly.
 # FIXME: Notify Systemd that we're ready, perhaps at the same time as ^ FIXME?
-mqtt_topic = mqtt_discovery(mqtt_client)
+mqtt_discovery(mqtt_client)
 mqtt_client.publish(topic=AVAILABILITY_TOPIC, payload='online', retain=False)
 
 # Set everything to off before we get started
-for role in PW_ROLE_NUM_STREAMS:
-    mqtt_topic = '/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "state"))
+for mqtt_topic in ('/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "state")) for role in PW_ROLE_NUM_STREAMS):
     mqtt_client.publish(topic=mqtt_topic,
                         payload='OFF',
                         retain=True)
 
+# This is a mapping of {stream_id: stream_role} so that we don't have to iterate all of 'PW_ROLE_NUM_STREAMS' to find a stream.
 playback_streams: dict[int, str] = {}
 for ev in pipewire_events():
     if 'type' not in ev and ev.get('info') is None:
@@ -172,7 +170,7 @@ for ev in pipewire_events():
                 print(f"{ev['id']} - del {stream_role} stream,",
                         f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}")
                 if len(PW_ROLE_NUM_STREAMS[stream_role]) == 0:
-                    mqtt_client.publish(topic=mqtt_topic,
+                    mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE, f"pipewire_{stream_role}", "state")),
                                         payload='OFF',
                                         retain=True)
 
@@ -195,12 +193,13 @@ for ev in pipewire_events():
                 if stream_role not in PW_ROLE_NUM_STREAMS:
                     stream_role = 'other'
 
-                mqtt_topic = '/'.join((MQTT_TOPIC_BASE, f"pipewire_{stream_role}", "state"))
                 PW_ROLE_NUM_STREAMS[stream_role].add(ev['id'])
                 print(f"{ev['id']} - new {stream_role} stream",
                         f"{ev['info']['props'].get('node.name', ev['info']['props'].get('application.name', ev['info']['props'].get('application.process.binary')))}[{ev['info']['props'].get('application.process.id')}],",
                         f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}")
-                mqtt_client.publish(topic=mqtt_topic,
+                mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE,
+                                                    f"pipewire_{stream_role}",
+                                                    "state")),
                                     payload='ON',
                                     retain=True)
 
