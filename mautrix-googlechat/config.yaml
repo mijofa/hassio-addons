@@ -2,7 +2,7 @@ name: "Mautrix Google Chat bridge"
 description: >-
   Pretty bare-bones add-on wrapper for the dock.mau.dev/mautrix/googlechat container
 url: "https://mau.dev/mautrix/googlechat"
-version: "0.0.4"
+version: "0.0.5"
 slug: "mautrix-googlechat"
 arch:
   # - aarch64

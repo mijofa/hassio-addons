@@ -2,7 +2,7 @@ name: "Mautrix Meta bridge"
 description: >-
   Pretty bare-bones add-on wrapper for the dock.mau.dev/mautrix/meta container
 url: "https://mau.dev/mautrix/meta"
-version: "0.0.3"
+version: "0.0.4"
 slug: "mautrix-meta"
 arch:
   # - aarch64
@@ -139,8 +139,8 @@ options:
         get_proxy_from:
         # Minimum interval between full reconnects in seconds, default is 1 hour
         min_full_reconnect_interval_seconds: 3600
-        # Interval to force refresh the connection (full reconnect), default is 1 day. Set 0 to disable force refreshes.
-        force_refresh_interval_seconds: 86400
+        # Interval to force refresh the connection (full reconnect), default is 20 hours. Set 0 to disable force refreshes.
+        force_refresh_interval_seconds: 72000
 
     # Bridge config
     bridge:
