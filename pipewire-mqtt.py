@@ -183,7 +183,7 @@ for ev in pipewire_events():
                 if ev['info']['props'].get('node.passive', False) is True:
                     # I've seen this with internal loopback & echo canceling modules.
                     continue
-                elif 'state' not in ev['info']['change-mask']:
+                elif 'state' not in ev['info']['change-mask'] and 'params' not in ev['info']['change-mask']:
                     # Don't care about anything other than state changes
                     continue
                 if ev['info']['state'] != 'running':
@@ -194,6 +194,11 @@ for ev in pipewire_events():
                 stream_role: str = ev['info']['props'].get('media.role', 'other').lower()
                 if stream_role not in PW_ROLE_NUM_STREAMS:
                     stream_role = 'other'
+
+                # Don't bother logging & publishing an update if we've already handled this one
+                # Just reduces log spam
+                if ev['id'] in PW_ROLE_NUM_STREAMS[stream_role]:
+                    continue
 
                 PW_ROLE_NUM_STREAMS[stream_role].add(ev['id'])
                 print(f"{ev['id']} - new {stream_role} stream ",
