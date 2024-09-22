@@ -160,21 +160,47 @@ for mqtt_topic in ('/'.join((MQTT_TOPIC_BASE, f"pipewire_{role}", "state")) for 
                         payload='OFF',
                         retain=True)
 
+def add_stream(stream_id: int, stream_role: typing.Literal[*PW_ROLE_NUM_STREAMS.keys()], app_id: str = ''):
+    # Don't bother logging & publishing an update if we've already handled this one
+    # Just reduces log spam
+    if stream_id in PW_ROLE_NUM_STREAMS[stream_role]:
+        return
+
+    PW_ROLE_NUM_STREAMS[stream_role].add(stream_id)
+    print(f"{stream_id} - new {stream_role} stream",
+            app_id,
+            f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}",
+            sep=', ')
+    mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE,
+                                        f"pipewire_{stream_role}",
+                                        "state")),
+                        payload='ON',
+                        retain=True)
+
+    # Keep record of what role this was so that we can track it on deletion
+    playback_streams[stream_id] = stream_role
+
+
+def subtract_stream(stream_id: int):
+    if stream_id not in playback_streams:
+        return
+    if (stream_role := playback_streams.pop(stream_id)) in PW_ROLE_NUM_STREAMS:
+        PW_ROLE_NUM_STREAMS[stream_role].remove(stream_id)
+        print(f"{stream_id} - del {stream_role} stream,",
+            f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}",
+            PW_ROLE_NUM_STREAMS[stream_role])
+        if len(PW_ROLE_NUM_STREAMS[stream_role]) == 0:
+            mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE, f"pipewire_{stream_role}", "state")),
+                                payload='OFF',
+                                retain=True)
+
+
 # This is a mapping of {stream_id: stream_role} so that we don't have to iterate all of 'PW_ROLE_NUM_STREAMS' to find a stream.
 playback_streams: dict[int, str] = {}
 for ev in pipewire_events():
     if 'type' not in ev and ev.get('info') is None:
         # This is a node being removed, but we don't know what type of node
-        if ev['id'] in playback_streams:
-            if (stream_role := playback_streams.pop(ev['id'])) in PW_ROLE_NUM_STREAMS:
-                PW_ROLE_NUM_STREAMS[stream_role].remove(ev['id'])
-                print(f"{ev['id']} - del {stream_role} stream,",
-                      f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}",
-                      PW_ROLE_NUM_STREAMS[stream_role])
-                if len(PW_ROLE_NUM_STREAMS[stream_role]) == 0:
-                    mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE, f"pipewire_{stream_role}", "state")),
-                                        payload='OFF',
-                                        retain=True)
+        subtract_stream(ev['id'])
 
     elif ev.get('type') == 'PipeWire:Interface:Node':
         match ev['info']['props'].get('media.class'):
@@ -186,8 +212,9 @@ for ev in pipewire_events():
                 elif 'state' not in ev['info']['change-mask'] and 'params' not in ev['info']['change-mask']:
                     # Don't care about anything other than state changes
                     continue
-                if ev['info']['state'] != 'running':
-                    # FIXME: Why is this not relevant?
+                if ev['info']['state'] == 'idle':
+                    # Media paused? Firefox sets this when a video is paused
+                    subtract_stream(ev['id'])
                     continue
 
                 # FIXME: WTF is this titlecased?
@@ -195,27 +222,11 @@ for ev in pipewire_events():
                 if stream_role not in PW_ROLE_NUM_STREAMS:
                     stream_role = 'other'
 
-                # Don't bother logging & publishing an update if we've already handled this one
-                # Just reduces log spam
-                if ev['id'] in PW_ROLE_NUM_STREAMS[stream_role]:
-                    continue
-
-                PW_ROLE_NUM_STREAMS[stream_role].add(ev['id'])
-                print(f"{ev['id']} - new {stream_role} stream ",
-                      ev['info']['props'].get('node.name',
-                                              ev['info']['props'].get('application.name',
-                                                                      ev['info']['props'].get('application.process.binary'))),
-                      f"[{ev['info']['props'].get('application.process.id')}], ",
-                      f"total = {len(PW_ROLE_NUM_STREAMS[stream_role])}",
-                      sep='')
-                mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE,
-                                                    f"pipewire_{stream_role}",
-                                                    "state")),
-                                    payload='ON',
-                                    retain=True)
-
-                # Keep record of what role this was so that we can track it on deletion
-                playback_streams[ev['id']] = stream_role
+                add_stream(stream_id=ev['id'],
+                           stream_role=stream_role,
+                           app_id=f"""{ev['info']['props'].get('node.name',
+                                        ev['info']['props'].get('application.name',
+                                            ev['info']['props'].get('application.process.binary', '')))}[{ev['info']['props'].get('application.process.id')}]""")
             case 'Audio/Sink':
                 # Pretty sure this is output sinks
                 if 'params' not in ev['info']['change-mask']:
