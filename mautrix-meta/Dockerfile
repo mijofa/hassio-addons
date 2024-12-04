@@ -1,4 +1,4 @@
-FROM dock.mau.dev/mautrix/meta:v0.3.2
+FROM dock.mau.dev/mautrix/meta:v0.4.2
 
 # I could probably drop this dependency, but then I'd be relying on the application to check the yaml for me.
 RUN apk add py3-yaml

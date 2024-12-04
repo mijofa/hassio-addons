@@ -6,6 +6,7 @@ import pathlib
 # import secrets
 import subprocess
 import sys
+import time
 
 import yaml
 
@@ -50,3 +51,5 @@ if __name__ == "__main__":
         # Start normally
         print("Starting service", flush=True)
         subprocess.check_call(['/docker-run.sh'])
+        print("sleeping for ages (99999s) to give you a chance to manually update the config")
+        time.sleep(99999)
