@@ -18,8 +18,8 @@ configuration:
   own_url:
     name: "The address that the homeserver can use to connect to this appservice."
 
-  login_shared_secret:
-    name: "Shared secret for use with matrix-synapse-shared-secret-auth."
+  double_puppet_token:
+    name: "Shared secret for use with double puppet auth per https://docs.mau.fi/bridges/general/double-puppeting.html."
     description: "I recommend using a '!secret some_password' macro with secrets.yaml to easily integrate with other add-ons"
 
   config.yaml:

@@ -2,7 +2,7 @@ name: "Mautrix Meta bridge"
 description: >-
   Pretty bare-bones add-on wrapper for the dock.mau.dev/mautrix/meta container
 url: "https://mau.dev/mautrix/meta"
-version: "0.0.5"
+version: "0.0.6"
 slug: "mautrix-meta"
 arch:
   # - aarch64
@@ -22,7 +22,7 @@ schema:
   synapse_url: url
   own_url: url
 
-  login_shared_secret: password
+  double_puppet_token: password
 
   config.yaml: str
 options:
@@ -31,9 +31,10 @@ options:
   synapse_url: http://674b3982-matrixdotorg-synapse:8008/
   own_url: http://674b3982-mautrix-meta:29319/
 
-  login_shared_secret: ""
+  double_puppet_token: ""
 
   # Copied from https://github.com/mautrix/meta/blob/3726a72b31dd4d1ef20c83cc9884b0ff499ccc4e/pkg/connector/example-config.yaml
+  # FIXME: Pretty sure all of this config.yaml template is just bullshit at this point
   config.yaml: |
     # Which service is this bridge for? Available options:
     # * unset - allow users to pick any service when logging in (except facebook-tor)
