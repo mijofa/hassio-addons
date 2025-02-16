@@ -19,7 +19,7 @@ CONFIG_FILE = pathlib.Path('/data/homeserver.yaml')
 APPSERVICE_REGISTRATIONS_DIR = pathlib.Path('/share/matrix_appservices/')  # FIXME: Should this be configurable?
 HOMESERVER_YAML = pathlib.Path('/data/homeserver.yaml')
 HOMESERVER_YAML_fordiff = pathlib.Path('/data/homeserver.yaml.custom')
-ELEMENT_CONFIG_JSON = pathlib.Path('/usr/local/lib/python3.11/site-packages/synapse/static/config.json')
+ELEMENT_CONFIG_JSON = pathlib.Path('/usr/local/lib/python3.12/site-packages/synapse/static/config.json')
 
 
 def parse_dburl(url: str):
