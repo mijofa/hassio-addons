@@ -2,7 +2,7 @@ name: "Matrix.org Synapse"
 description: >-
   Pretty bare-bones add-on wrapper for the matrixdotorg/synapse Dockerhub container
 url: "https://hub.docker.com/r/matrixdotorg/synapse"
-version: "0.0.23"
+version: "0.0.24"
 slug: "matrixdotorg-synapse"
 ingress: true
 ingress_port: 8008
@@ -71,7 +71,8 @@ options:
     soft_file_limit: 0
     log_config: "/data/{server_name}.log.config"
     public_baseurl: {public_baseurl}
-    serve_server_wellknown: true
+    # Only use this if the server_name above matches our required public_baseurl
+    serve_server_wellknown: false
 
     ## Ports ##
     listeners:
