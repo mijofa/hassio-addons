@@ -12,7 +12,7 @@ RUN curl -sSL $(curl --silent https://api.github.com/repos/element-hq/element-we
 # FIXME: Is this still necessary?
 RUN sed -i "/Content-Security-Policy/ s/frame-ancestors 'none';/frame-ancestors 'self';/" /usr/local/lib/python3.12/site-packages/synapse/http/server.py
 
-RUN curl -sSL https://github.com/devture/matrix-synapse-shared-secret-auth/raw/2.0.3/shared_secret_authenticator.py --output /usr/local/lib/python3.11/site-packages/shared_secret_authenticator.py
+RUN curl -sSL https://github.com/devture/matrix-synapse-shared-secret-auth/raw/2.0.3/shared_secret_authenticator.py --output /usr/local/lib/python3.12/site-packages/shared_secret_authenticator.py
 
 # Upstream's entrypoint is `["/start.py"]` but I want to inject Home Assistant's config in before that,
 # so I have an alternative entrypoint which will call start.py itself
