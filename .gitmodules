@@ -1,6 +1,3 @@
 [submodule "Hassio-Access-Point"]
 	path = Hassio-Access-Point
 	url = https://github.com/mijofa/Hassio-Access-Point
-[submodule "mx-puppet-steam/upstream"]
-	path = mx-puppet-steam/upstream
-	url = git@github.com:blueperil/mx-puppet-steam/
