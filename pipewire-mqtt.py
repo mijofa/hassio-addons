@@ -3,6 +3,7 @@
 import json
 import socket
 import subprocess
+import sys
 import typing
 import uuid
 
@@ -82,7 +83,11 @@ def read_pretty_json_list(fp: typing.TextIO):
         line: str = fp.readline()
         json_string += line
 
-    return json.loads(json_string)
+    try:
+        return json.loads(json_string)
+    except json.decoder.JSONDecodeError:
+        print("Failed to decode event", line, file=sys.stderr)
+        raise
 
 
 def pipewire_events():
