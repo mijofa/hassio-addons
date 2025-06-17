@@ -37,6 +37,9 @@ PW_ROLE_NUM_STREAMS: dict[str, set] = {
     "production": set(),
     # FIXME: Should this be phone?
     #        This is what I'm seeing with Discord, even though I've set `Environment=PULSE_PROP="media.role=phone"`
+    # There is a special hack for dealing with Discord.
+    # I don't care if Discord is playing sound, but I do care when I'm talking to Discord.
+    # So I treat the 'communication' role special by only inhibiting it when an app is listening for Mic input
     "communication": set(),
     # Not a real option, I'm just using this for anything that doesn't have a defined role
     # FIXME: Should probably use this for any roles that are not in this list either
@@ -224,6 +227,9 @@ for ev in pipewire_events():
 
                 # FIXME: WTF is this titlecased?
                 stream_role: str = ev['info']['props'].get('media.role', 'other').lower()
+                if stream_role == 'communication':
+                    # Hack for dealing with Discord being annoying
+                    continue
                 if stream_role not in PW_ROLE_NUM_STREAMS:
                     stream_role = 'other'
 
@@ -232,6 +238,24 @@ for ev in pipewire_events():
                            app_id=f"""{ev['info']['props'].get('node.name',
                                         ev['info']['props'].get('application.name',
                                             ev['info']['props'].get('application.process.binary', '')))}[{ev['info']['props'].get('application.process.id')}]""")
+
+            case 'Stream/Input/Audio':
+                # This is a hack for dealing with Discord.
+                # I don't care if Discord is playing sound, but I do care when I'm talking to Discord.
+                # So I treat the 'communication' role special by only inhibiting it when an app is listening for Mic input
+                if ev['info']['props'].get('node.passive', False) is True:
+                    continue
+                elif 'state' not in ev['info']['change-mask'] and 'params' not in ev['info']['change-mask']:
+                    continue
+                stream_role: str = ev['info']['props'].get('media.role', 'other').lower()
+                if stream_role != 'communication':
+                    continue
+                add_stream(stream_id=ev['id'],
+                           stream_role=stream_role,
+                           app_id=f"""{ev['info']['props'].get('node.name',
+                                        ev['info']['props'].get('application.name',
+                                            ev['info']['props'].get('application.process.binary', '')))}[{ev['info']['props'].get('application.process.id')}]""")
+
             case 'Audio/Sink':
                 # Pretty sure this is output sinks
                 if 'params' not in ev['info']['change-mask']:
