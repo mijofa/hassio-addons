@@ -2,7 +2,7 @@ name: "Mautrix Meta bridge"
 description: >-
   Pretty bare-bones add-on wrapper for the dock.mau.dev/mautrix/meta container
 url: "https://mau.dev/mautrix/meta"
-version: "0.0.9"
+version: "0.0.10"
 slug: "mautrix-meta"
 arch:
   # - aarch64
@@ -46,6 +46,8 @@ options:
     #
     # Remember to change the appservice id, bot profile info, bridge username_template and management_room_text too.
     mode:
+    # Should users be allowed to pick messenger.com login when mode is set to `facebook`?
+    allow_messenger_com_on_fb: false
 
     # When in Instagram mode, should the bridge connect to WhatsApp servers for encrypted chats?
     # In FB/Messenger mode encryption is always enabled, this option only affects Instagram mode.
@@ -68,6 +70,8 @@ options:
     min_full_reconnect_interval_seconds: 3600
     # Interval to force refresh the connection (full reconnect), default is 20 hours. Set 0 to disable force refreshes.
     force_refresh_interval_seconds: 72000
+    # Should connection state be cached to allow quicker restarts?
+    cache_connection_state: false
     # Disable fetching XMA media (reels, stories, etc) when backfilling.
     disable_xma_backfill: true
     # Disable fetching XMA media entirely.
