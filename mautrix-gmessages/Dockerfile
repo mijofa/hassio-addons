@@ -1,4 +1,4 @@
-FROM dock.mau.dev/mautrix/gmessages:v0.6.2
+FROM dock.mau.dev/mautrix/gmessages:v0.6.4
 # NOTE: v0.4.0 enabled "appservice ephemeral events by default for new installations"
 #       looks like I already had that enabled myself though... weird
 

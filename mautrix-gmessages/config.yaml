@@ -2,7 +2,7 @@ name: "Mautrix Google Messages bridge"
 description: >-
   Pretty bare-bones add-on wrapper for the dock.mau.dev/mautrix/gmessages container
 url: "https://mau.dev/mautrix/gmessages"
-version: "0.0.2"
+version: "0.0.3"
 slug: "mautrix-gmessages"
 arch:
   # - aarch64
