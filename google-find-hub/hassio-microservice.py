@@ -122,6 +122,7 @@ if __name__ == '__main__':
     config: dict[str, str | int | bool] = json.loads(pathlib.Path('/data/options.json').read_text())
 
     polling_interval: int = config['polling_interval_mins']
+    print(polling_interval)
 
     global mqtt_client
     mqtt_client = paho.mqtt.client.Client(
@@ -135,6 +136,7 @@ if __name__ == '__main__':
     mqtt_client.connect_async(host=config['mqtt_host'], port=config['mqtt_port'])
     mqtt_client.loop_start()
     mqtt_client.will_set(topic=AVAILABILITY_TOPIC, payload="offline")
+    print('mqtt connected')
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -142,12 +144,14 @@ if __name__ == '__main__':
     fcm = FcmReceiver()
     loop.run_until_complete(fcm._register_for_fcm_and_listen())
     fcm_token = fcm.register_for_location_updates(location_update_handler)
+    print('handler registered')
 
     # NOTE: Google remembers these requests across runs.
     #       So if you Ctrl-C and rerun, you may start seening extra results,
     #       this is normal as it is showing you results from the previous run.
     # FIXME: Can we confirm every device responds before we request again?
     while True:
+        print('loop')
         mqtt_client.publish(topic=AVAILABILITY_TOPIC, payload="online")
         loop.run_until_complete(asyncio.gather(
             send_new_location_requests(fcm_token=fcm_token),
