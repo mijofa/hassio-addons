@@ -1,6 +1,6 @@
 name: "google-find-hub"
 description: "Google Find Hub"
-version: "0.3"
+version: "0.4"
 slug: "googlefindhub"
 init: false
 arch:
@@ -22,5 +22,5 @@ schema:
   mqtt_port: int
 options:
   polling_interval_mins: 15
-  mqtt_host: supervisor
+  mqtt_host: core-mosquitto.local.hass.io
   mqtt_port: 1883
