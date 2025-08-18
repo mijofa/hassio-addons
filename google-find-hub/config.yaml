@@ -1,7 +1,7 @@
 name: "google-find-hub"
 description: "Google Find Hub"
 version: "0.1"
-slug: "google-find-hub"
+slug: "googlefindhub"
 init: false
 arch:
   - aarch64
