@@ -18,8 +18,14 @@ from ProtoDecoders import DeviceUpdate_pb2
 reported_devices: set[str] = set()
 
 
+class TryAgainLater(Exception):
+    pass
+
+
 async def list_devices():
     result_hex = request_device_list()
+    if not result_hex:
+        raise TryAgainLater("Listing devices resulted in empty data")
 
     # parse_device_list_protobuf
     device_list = DeviceUpdate_pb2.DevicesList()
@@ -75,7 +81,6 @@ async def send_new_location_requests(fcm_token):
         # FIXME: Record this UUID so we can ignore requests we didn't make ourselves?
         payload = create_location_request(device['id'], fcm_token, request_uuid)
         nova_request(NOVA_ACTION_API_SCOPE, payload)
-
 
 
 ### MQTT stuff!
@@ -146,12 +151,19 @@ if __name__ == '__main__':
     #       So if you Ctrl-C and rerun, you may start seening extra results,
     #       this is normal as it is showing you results from the previous run.
     # FIXME: Can we confirm every device responds before we request again?
+    fail_count = 0
     while True:
-        mqtt_client.publish(topic=AVAILABILITY_TOPIC, payload="online")
-        loop.run_until_complete(asyncio.gather(
-            send_new_location_requests(fcm_token=fcm_token),
-            asyncio.sleep(delay=60 * polling_interval),
-        ))
+        try:
+            mqtt_client.publish(topic=AVAILABILITY_TOPIC, payload="online")
+            loop.run_until_complete(asyncio.gather(
+                send_new_location_requests(fcm_token=fcm_token),
+                asyncio.sleep(delay=60 * polling_interval),
+            ))
+            fail_count = 0
+        except TryAgainLater:
+            fail_count += 1
+            if fail_count > 3:
+                raise
 
     # This should never be reached.
     pending = [t for t in asyncio.all_tasks(loop) if not t.done()]
