@@ -1,6 +1,6 @@
 name: "google-find-hub"
 description: "Google Find Hub"
-version: "0.5"
+version: "0.6"
 slug: "googlefindhub"
 init: false
 arch:
