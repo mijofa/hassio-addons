@@ -1,8 +1,14 @@
-import json
 import asyncio
+import datetime
+import json
+import logging
 import pathlib
 
 import paho.mqtt.client
+# FIXME: Should I be using wait_for_publish more?
+#        In theory it shouldn't matter because most publishes "should" work,
+#        and it's fine if a loop or 2 fails
+#        https://pypi.org/project/paho-mqtt/
 
 from NovaApi.ListDevices.nbe_list_devices import request_device_list
 from ProtoDecoders.decoder import parse_device_update_protobuf
@@ -14,6 +20,7 @@ from Auth.fcm_receiver import FcmReceiver
 from NovaApi.ExecuteAction.LocateTracker.decrypt_locations import extract_locations
 from ProtoDecoders import DeviceUpdate_pb2
 
+logging.basicConfig(level=logging.DEBUG)
 
 reported_devices: set[str] = set()
 
@@ -61,6 +68,12 @@ def location_update_handler(resp_hex):
     for canonic_id in update.deviceMetadata.identifierInformation.canonicIds.canonicId:
         data: dict[str, str | int | bool] = _get_latest_location(extract_locations(update))
         data['gps_accuracy'] = data.pop('accuracy')  # Home Assistant requires different key name
+        # I'm not sure if Home Assistant ever actually uses these attributes, but they're handy for **me**
+        timestamp = datetime.datetime.fromtimestamp(data.pop('time'), datetime.timezone.utc)  # FIXME: Use local timezone?
+        # Just in case, I'm setting both the one the Android app uses, and the one the Tile integration uses
+        data['last_time_reachable'] = timestamp.strftime('%Y-%m-%dT%H:%M:%S%z')  # Android App
+        data['last_timestamp'] = timestamp.strftime('%Y-%m-%dT%H:%M:%S%z')  # Tile integration
+        # data['last_lost_timestamp']  # Pretty sure this is for when someone tells Tile that the tracker has been lost, not (yet) relevant here.
         mqtt_client.publish(
             topic='/'.join((MQTT_TOPIC_BASE, canonic_id.id, "attributes")),
             payload=json.dumps(data),
@@ -132,6 +145,7 @@ if __name__ == '__main__':
         # We don't actually use these callbacks at all (yet?)
         # but there's a deprecation warning if I don't set this.
         callback_api_version=paho.mqtt.client.CallbackAPIVersion.VERSION2)
+    mqtt_client.enable_logger()  # FIXME: wtf is this not just a thing already.
     # NOTE: The will must be set before connecting.
     mqtt_client.will_set(topic=AVAILABILITY_TOPIC, payload='offline')
     # FIXME: Try anonymous, and fallback on guest:guest when that fails
