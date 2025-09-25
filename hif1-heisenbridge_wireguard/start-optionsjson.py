@@ -16,7 +16,7 @@ WIREGUARD_CONF = pathlib.Path('/etc/wireguard/wg0.conf')
 REGISTRATION_FILE = (pathlib.Path('/share/matrix_appservices/') / socket.gethostname()).with_suffix('.yaml')
 
 # Snappymail is no longer supported, delete it.
-shutil.rmtree(pathlib.Path('/data/snappymail_data_'))
+shutil.rmtree(pathlib.Path('/data/snappymail_data_'), ignore_errors=True)
 
 if not OPTIONS_FILE.exists():
     raise Exception("No /data/options.json file")
