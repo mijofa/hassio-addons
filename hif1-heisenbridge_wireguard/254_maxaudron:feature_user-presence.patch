@@ -1,22 +1,18 @@
-From 55e64b1715e93cc0ed2d633e2e8b675f3929d602 Mon Sep 17 00:00:00 2001
-From: Max Audron <audron@cocaine.farm>
-Date: Sat, 18 Mar 2023 17:08:10 +0100
-Subject: [PATCH] implement user presence
+commit 2ced17829cbae171f56dcee35b36cd36fa0de8e9
+Author: Max Audron <audron@cocaine.farm>
+Date:   Sat Mar 18 17:08:10 2023 +0100
 
-When joining a channel a WHO is executed to gather initial AWAY status
-for all users in the channel. After that user presence is updated when
-futher AWAY messages are received.
----
- heisenbridge/__main__.py     | 14 ++++++++++++++
- heisenbridge/channel_room.py |  3 +++
- heisenbridge/network_room.py | 30 ++++++++++++++++++++++++++++--
- 3 files changed, 45 insertions(+), 2 deletions(-)
+    implement user presence
+    
+    When joining a channel a WHO is executed to gather initial AWAY status
+    for all users in the channel. After that user presence is updated when
+    futher AWAY messages are received.
 
 diff --git a/heisenbridge/__main__.py b/heisenbridge/__main__.py
-index d59febd..4898955 100644
+index f9cef25..b5dd0ca 100644
 --- a/heisenbridge/__main__.py
 +++ b/heisenbridge/__main__.py
-@@ -28,6 +28,7 @@
+@@ -32,6 +32,7 @@ from mautrix.errors import MUserInUse
  from mautrix.types import EventType
  from mautrix.types import JoinRule
  from mautrix.types import Membership
@@ -24,7 +20,7 @@ index d59febd..4898955 100644
  from mautrix.util.bridge_state import BridgeState
  from mautrix.util.bridge_state import BridgeStateEvent
  from mautrix.util.config import yaml
-@@ -192,6 +193,19 @@ def irc_user_id(self, network, nick, at=True, server=True):
+@@ -197,6 +198,19 @@ class BridgeAppService(AppService):
  
          return ret
  
@@ -45,10 +41,10 @@ index d59febd..4898955 100644
          # start by caching that the user_id exists without a displayname
          if user_id not in self._users:
 diff --git a/heisenbridge/channel_room.py b/heisenbridge/channel_room.py
-index 119dad0..3e0651d 100644
+index c603f36..7327929 100644
 --- a/heisenbridge/channel_room.py
 +++ b/heisenbridge/channel_room.py
-@@ -478,6 +478,9 @@ async def autocmd(self):
+@@ -479,6 +479,9 @@ class ChannelRoom(PrivateRoom):
  
                  asyncio.ensure_future(autocmd(self))
  
@@ -59,10 +55,10 @@ index 119dad0..3e0651d 100644
  
          # ensure, append, invite and join
 diff --git a/heisenbridge/network_room.py b/heisenbridge/network_room.py
-index 3c20654..2758462 100644
+index 227c289..1b3a619 100644
 --- a/heisenbridge/network_room.py
 +++ b/heisenbridge/network_room.py
-@@ -139,7 +139,7 @@ def init(self):
+@@ -142,7 +142,7 @@ class NetworkRoom(Room):
          self.tls_cert = None
          self.rejoin_invite = True
          self.rejoin_kick = False
@@ -71,7 +67,7 @@ index 3c20654..2758462 100644
          self.forward = False
          self.backoff = 0
          self.backoff_task = None
-@@ -1378,6 +1378,7 @@ async def _connect(self) -> None:
+@@ -1401,6 +1401,7 @@ class NetworkRoom(Room):
                  self.conn.add_global_handler("338", self.on_whoisrealhost)  # is actually using host
                  self.conn.add_global_handler("away", self.on_away)
                  self.conn.add_global_handler("endofwhois", self.on_endofwhois)
@@ -79,7 +75,7 @@ index 3c20654..2758462 100644
  
                  # tags
                  self.conn.add_global_handler("tagmsg", self.on_pass_or_ignore)
-@@ -1936,9 +1937,34 @@ def on_whoisrealhost(self, conn, event) -> None:
+@@ -1961,7 +1962,25 @@ class NetworkRoom(Room):
          data = self.whois_data[event.arguments[0].lower()]
          data["realhost"] = event.arguments[1]
  
@@ -102,7 +98,13 @@ index 3c20654..2758462 100644
 +        nick, mode = self.serv.strip_nick(event.arguments[0])
 +        irc_user_id = self.serv.irc_user_id(self.name, event.arguments[0])
 +
-         if event.arguments[0].lower() in self.whois_data:
+         if len(event.arguments) < 2:
+             target = self
+             if event.source.nick in self.rooms:
+@@ -1972,7 +1991,14 @@ class NetworkRoom(Room):
+             else:
+                 target.send_notice(f"{event.source.nick} is now away: {event.target}")
+         elif event.arguments[0].lower() in self.whois_data:
 -            self.whois_data[event.arguments[0].lower()]["away"] = event.arguments[1]
 +            if len(event.arguments) > 1:
 +                self.whois_data[event.arguments[0].lower()]["away"] = True
