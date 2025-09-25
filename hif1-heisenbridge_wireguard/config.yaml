@@ -2,7 +2,7 @@ name: "Matrix Heisenbridge, with Wireguard"
 description: >-
   Add-on wrapper for hif1/heisenbridge, with included Wireguard support. Intended for use with work's VPN to assist with work communications
 url: "https://github.com/mijofa/hassio-addons/tree/master/hif1-heisenbridge_wireguard"
-version: "0.7.0"
+version: "0.7.1"
 slug: "hif1-heisenbridge_wireguard"
 arch:
   # - aarch64
