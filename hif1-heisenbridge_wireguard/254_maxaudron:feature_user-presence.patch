@@ -1,0 +1,117 @@
+From 55e64b1715e93cc0ed2d633e2e8b675f3929d602 Mon Sep 17 00:00:00 2001
+From: Max Audron <audron@cocaine.farm>
+Date: Sat, 18 Mar 2023 17:08:10 +0100
+Subject: [PATCH] implement user presence
+
+When joining a channel a WHO is executed to gather initial AWAY status
+for all users in the channel. After that user presence is updated when
+futher AWAY messages are received.
+---
+ heisenbridge/__main__.py     | 14 ++++++++++++++
+ heisenbridge/channel_room.py |  3 +++
+ heisenbridge/network_room.py | 30 ++++++++++++++++++++++++++++--
+ 3 files changed, 45 insertions(+), 2 deletions(-)
+
+diff --git a/heisenbridge/__main__.py b/heisenbridge/__main__.py
+index d59febd..4898955 100644
+--- a/heisenbridge/__main__.py
++++ b/heisenbridge/__main__.py
+@@ -28,6 +28,7 @@
+ from mautrix.types import EventType
+ from mautrix.types import JoinRule
+ from mautrix.types import Membership
++from mautrix.types import PresenceState
+ from mautrix.util.bridge_state import BridgeState
+ from mautrix.util.bridge_state import BridgeStateEvent
+ from mautrix.util.config import yaml
+@@ -192,6 +193,19 @@ def irc_user_id(self, network, nick, at=True, server=True):
+ 
+         return ret
+ 
++    def set_user_state(self, user_id, away, status=None):
++        if user_id not in self._users:
++            return
++
++        presence = PresenceState.ONLINE
++        if away:
++            presence = PresenceState.UNAVAILABLE
++
++        async def later():
++            await self.az.intent.user(user_id).set_presence(presence=presence, status=status)
++
++        asyncio.ensure_future(later())
++
+     async def cache_user(self, user_id, displayname):
+         # start by caching that the user_id exists without a displayname
+         if user_id not in self._users:
+diff --git a/heisenbridge/channel_room.py b/heisenbridge/channel_room.py
+index 119dad0..3e0651d 100644
+--- a/heisenbridge/channel_room.py
++++ b/heisenbridge/channel_room.py
+@@ -478,6 +478,9 @@ async def autocmd(self):
+ 
+                 asyncio.ensure_future(autocmd(self))
+ 
++            # Run a WHO on the channel to get initial away status
++            self.network.conn.who(target=event.target)
++
+             return
+ 
+         # ensure, append, invite and join
+diff --git a/heisenbridge/network_room.py b/heisenbridge/network_room.py
+index 3c20654..2758462 100644
+--- a/heisenbridge/network_room.py
++++ b/heisenbridge/network_room.py
+@@ -139,7 +139,7 @@ def init(self):
+         self.tls_cert = None
+         self.rejoin_invite = True
+         self.rejoin_kick = False
+-        self.caps = ["message-tags", "chghost", "znc.in/self-message"]
++        self.caps = ["message-tags", "chghost", "znc.in/self-message", "away-notify"]
+         self.forward = False
+         self.backoff = 0
+         self.backoff_task = None
+@@ -1378,6 +1378,7 @@ async def _connect(self) -> None:
+                 self.conn.add_global_handler("338", self.on_whoisrealhost)  # is actually using host
+                 self.conn.add_global_handler("away", self.on_away)
+                 self.conn.add_global_handler("endofwhois", self.on_endofwhois)
++                self.conn.add_global_handler("whoreply", self.on_whoreply)
+ 
+                 # tags
+                 self.conn.add_global_handler("tagmsg", self.on_pass_or_ignore)
+@@ -1936,9 +1937,34 @@ def on_whoisrealhost(self, conn, event) -> None:
+         data = self.whois_data[event.arguments[0].lower()]
+         data["realhost"] = event.arguments[1]
+ 
++    def on_whoreply(self, conn, event) -> None:
++        data = self.whois_data[event.arguments[4].lower()]
++        data["nick"] = event.arguments[4]
++        data["user"] = event.arguments[1]
++        data["host"] = event.arguments[2]
++        if "G" in event.arguments[5]:
++            data["away"] = True
++        elif "H" in event.arguments[5]:
++            data["away"] = False
++        # data["realname"] = event.arguments[4]
++
++        nick, mode = self.serv.strip_nick(data["nick"])
++        irc_user_id = self.serv.irc_user_id(self.name, data["nick"])
++        self.serv.set_user_state(irc_user_id, data["away"])
++
+     def on_away(self, conn, event) -> None:
++        nick, mode = self.serv.strip_nick(event.arguments[0])
++        irc_user_id = self.serv.irc_user_id(self.name, event.arguments[0])
++
+         if event.arguments[0].lower() in self.whois_data:
+-            self.whois_data[event.arguments[0].lower()]["away"] = event.arguments[1]
++            if len(event.arguments) > 1:
++                self.whois_data[event.arguments[0].lower()]["away"] = True
++                self.whois_data[event.arguments[0].lower()]["awaymsg"] = event.arguments[1]
++                self.serv.set_user_state(irc_user_id, True, event.arguments[1])
++            else:
++                self.whois_data[event.arguments[0].lower()]["away"] = False
++                self.whois_data[event.arguments[0].lower()]["awaymsg"] = ""
++                self.serv.set_user_state(irc_user_id, False)
+         else:
+             self.send_notice(f"{event.arguments[0]} is away: {event.arguments[1]}")
+ 
