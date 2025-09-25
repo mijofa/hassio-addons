@@ -120,3 +120,42 @@ index 227c289..5fa46e3 100644
          else:
              self.send_notice(f"{event.arguments[0]} is away: {event.arguments[1]}")
  
+diff --git i/heisenbridge/__main__.py w/heisenbridge/__main__.py
+index b5dd0ca..7b60ce9 100644
+--- i/heisenbridge/__main__.py
++++ w/heisenbridge/__main__.py
+@@ -478,15 +478,15 @@ class BridgeAppService(AppService):
+         except MatrixRequestError:
+             pass
+ 
+-    def _keepalive(self):
+-        async def put_presence():
+-            try:
+-                await self.az.intent.set_presence(self.user_id)
+-            except Exception:
+-                pass
++    # def _keepalive(self):
++    #     async def put_presence():
++    #         try:
++    #             await self.az.intent.set_presence(self.user_id)
++    #         except Exception:
++    #             pass
+ 
+-        asyncio.ensure_future(put_presence())
+-        asyncio.get_running_loop().call_later(60, self._keepalive)
++    #     asyncio.ensure_future(put_presence())
++    #     asyncio.get_running_loop().call_later(60, self._keepalive)
+ 
+     async def ensure_hidden_room(self):
+         use_hidden_room = self.config.get("use_hidden_room", False)
+@@ -701,8 +701,8 @@ class BridgeAppService(AppService):
+             await asyncio.Event().wait()
+             return
+ 
+-        logging.info("Starting presence loop")
+-        self._keepalive()
++        # logging.info("Starting presence loop")
++        # self._keepalive()
+ 
+         # do a little migration for servers, remove this later
+         for network in self.config["networks"].values():
