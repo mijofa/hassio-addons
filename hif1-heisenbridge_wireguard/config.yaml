@@ -2,16 +2,8 @@ name: "Matrix Heisenbridge, with Wireguard"
 description: >-
   Add-on wrapper for hif1/heisenbridge, with included Wireguard support. Intended for use with work's VPN to assist with work communications
 url: "https://github.com/mijofa/hassio-addons/tree/master/hif1-heisenbridge_wireguard"
-version: "0.6.5"
+version: "0.7.0"
 slug: "hif1-heisenbridge_wireguard"
-ingress: true
-# ingress_port: 8099
-ingress_entry: "?"
-# ingress_stream: false
-# panel_icon: mdi:email-multiple
-# panel_icon: mdi:mailbox
-panel_icon: mdi:at
-panel_title: Email
 arch:
   # - aarch64
   - amd64
@@ -38,14 +30,6 @@ schema:
   wireguard_endpoint: str
   wireguard_public_key: str
   wireguard_allowed_IPs: [str]
-
-  snappymail_admin_username: str
-  snappymail_admin_password: password
-
-  snappymail_frame-ancestors: str?
-
-  snappymail_UPLOAD_MAX_SIZE: str?
-  snappymail_MEMORY_LIMIT: str?
 options:
   heisenbridge_synapse_url: http://674b3982-matrixdotorg-synapse:8008/
   heisenbridge_own_url: http://674b3982-hif1-heisenbridge-wireguard:9898/
@@ -56,13 +40,3 @@ options:
   wireguard_endpoint: null
   wireguard_public_key: null
   wireguard_allowed_IPs: null
-
-  # NOTE: This is referred to as "admin_login" in the snappymail config, but I think that's too ambigious
-  snappymail_admin_username: admin
-  snappymail_admin_password: null
-
-  # NOTE: The single quotes are required in this string
-  snappymail_frame-ancestors: "'none'"
-
-  snappymail_UPLOAD_MAX_SIZE: 25M
-  snappymail_MEMORY_LIMIT: 128M
