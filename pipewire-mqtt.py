@@ -46,7 +46,8 @@ PW_ROLE_NUM_STREAMS: dict[str, set] = {
     'other': set(),
 }
 
-MQTT_TOPIC_BASE: str = f"homeassistant/binary_sensor/{socket.gethostname()}"
+hostname = socket.gethostname().split('.', 1)[0]
+MQTT_TOPIC_BASE: str = f"homeassistant/binary_sensor/{hostname}"
 AVAILABILITY_TOPIC: str = '/'.join((MQTT_TOPIC_BASE, "availability"))
 
 
