@@ -49,7 +49,7 @@ PW_ROLE_NUM_STREAMS: dict[str, set] = {
 
 hostname = socket.gethostname().split('.', 1)[0]
 MQTT_TOPIC_BASE: str = f"homeassistant/binary_sensor/{hostname}"
-AVAILABILITY_TOPIC: str = '/'.join((MQTT_TOPIC_BASE, "availability"))
+AVAILABILITY_TOPIC: str = '/'.join((MQTT_TOPIC_BASE, "pipewire_availability"))
 
 
 def mqtt_discovery(client: paho.mqtt.client.Client):
@@ -64,7 +64,7 @@ def mqtt_discovery(client: paho.mqtt.client.Client):
                            "availability_topic": AVAILABILITY_TOPIC,
                            "device": {
                                "connections": [("mac", hex_mac)],
-                               "name": socket.gethostname()},
+                               "name": hostname},
                            "device_class": "sound",
                            # "category": "config/diagnostic",  # FIXME: wtf is this?
                            # "icon": "mdi:monitor-speaker",
