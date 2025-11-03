@@ -28,6 +28,7 @@ PW_ROLE_NUM_STREAMS: dict[str, set] = {
     # Chat notification blips, should this mute the music?
     # Ideally, probably not.
     # Realistically I probably can't differentiate it from 'phone' because I'm setting role at the application level.
+    "notification": set(),
     "event": set(),
     # I personally don't expect to use this one currently.
     # It maybe shouldn't mute the music, but maybe lower the music volume.
