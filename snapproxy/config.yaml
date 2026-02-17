@@ -1,6 +1,6 @@
 name: "snapcast"
 description: "Snapcast Media Player"
-version: "0.43"
+version: "0.44"
 # FIXME: This slug is outdated given I don't consider this a "proxy" anymore,
 #        but it's kinda baked into the HA config and other places by now
 slug: "snapcastproxy"
@@ -25,6 +25,7 @@ ingress_port: 1780
 ingress_stream: true
 panel_icon: "mdi:speaker-wireless"
 panel_title: "Snapweb"
+panel_admin: false
 ports:
   1704/tcp: 1704
   1705/tcp: 1705
