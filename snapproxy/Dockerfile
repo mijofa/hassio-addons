@@ -18,11 +18,6 @@ RUN unzip -od /usr/share/snapserver/snapweb/ /tmp/snapweb.zip
 COPY snapjs.patch /
 RUN patch -p0 -i /snapjs.patch
 
-RUN apk add --no-cache spotifyd ; \
-    mkdir /var/cache/spotifyd ; \
-    ln -s /data/spotify-zeroconf /var/cache/spotifyd/zeroconf ; \
-    ln -s /data/spotify-oauth /var/cache/spotifyd/oauth
-
 COPY start-optionsjson.py /
 #ENTRYPOINT ["/start-optionsjson.py"]
 CMD /start-optionsjson.py
