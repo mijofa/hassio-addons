@@ -1,6 +1,6 @@
 name: "snapcast"
 description: "Snapcast Media Player"
-version: "0.45"
+version: "0.46"
 # FIXME: This slug is outdated given I don't consider this a "proxy" anymore,
 #        but it's kinda baked into the HA config and other places by now
 slug: "snapcastproxy"
@@ -32,10 +32,14 @@ ports:
   1780/tcp: 1780
   6600/tcp: 6600
   6601/tcp: 6601
+  41447/tcp: 41447
+  41447/udp: 41447
 ports_description:
   1704/tcp: "Snapserver stream endpoint"
   1705/tcp: "Snapserver control endpoint"
   1780/tcp: "Snapweb json-RPC endpoint"
+  41447/tcp: "Spotifyd zeroconf listener, DO NOT CHANGE"
+  41447/udp: "Spotifyd zeroconf listener, DO NOT CHANGE"
 schema:
   stream_sources:
     - str

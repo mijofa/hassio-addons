@@ -120,6 +120,20 @@ if __name__ == "__main__":
     mpd_other.stdin.close()
     processes[mpd_music.pid] = mpd_other
 
+    spotifyd = subprocess.Popen(['spotifyd', '--no-daemon',
+                                             '--no-audio-cache=true',
+                                             '--volume-controller', 'none',
+                                             '--device-name', 'Home',
+                                             '--initial-volume', '100',
+                                             '--disable-discovery=false',
+                                             '--zeroconf-port', '41447',
+                                             '--device-type', 'speaker',
+                                             '--autoplay=true',
+                                             '--use-mpris=false',
+                                             '--backend', 'pulseaudio',
+                                             '--device', 'snapfifo'])
+    processes[spotifyd.pid] = mpd_other
+
     crashed = False
     while crashed is False:
         pid, status = os.wait()
