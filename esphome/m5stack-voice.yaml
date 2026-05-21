@@ -23,9 +23,8 @@ wifi:
     ssid: "M5Stack-Atom-Echos3R"
     password: [redacted]
 
-captive_portal:
-
 logger:
+  level: DEBUG
 
 ## M5Stack stuff
 esp32:
@@ -44,6 +43,7 @@ esp32:
 psram:
   mode: octal
   speed: 80MHz
+  disabled: true
 
 button:
   - platform: factory_reset
@@ -88,7 +88,7 @@ binary_sensor:
       - timing:
           - ON for at least 10s
         then:
-          - button.press: factory_reset_btn 
+          - button.press: factory_reset_btn
       - timing:
           - ON for at least 1s
           # - OFF for at least 0.5s
@@ -139,26 +139,6 @@ audio_dac:
     bits_per_sample: 16bit
     sample_rate: 48000
 
-# Might be useful, but not sure how I'd use it with Snapclient
-# microphone:
-#   - platform: i2s_audio
-#     id: i2s_mic
-#     sample_rate: 16000
-#     i2s_din_pin: GPIO4
-#     bits_per_sample: 16bit
-#     adc_type: external
-
-# Snapclient uses i2s_dout_pin directly, but if it's going to be a "real" ESPHome component, it should probably use this.
-# speaker:
-#   - platform: i2s_audio
-#     id: i2s_speaker
-#     i2s_dout_pin: GPIO48
-#     dac_type: external
-#     sample_rate: 48000
-#     bits_per_sample: 16bit
-#     channel: left
-#     audio_dac: es8311_dac
-
 # M5Stack upstream marked this as internal and used it in some scripting.
 # I've decided to make this visible to Home Assistant, but don't know how I'll use it.
 switch:
@@ -172,25 +152,30 @@ switch:
     internal: false
 
 ## Snapcast snapclient stuff.
-## ref: https://github.com/c-MM/esphome-snapclient
-## better ref?: https://github.com/esphome/esphome/pull/14389   and   https://github.com/sonocotta/esp32-audio-dock/blob/main/firmware/esphome/packages/snapclient-new.yaml
-## Still doesn't use a speaker component though, so is it any better?
+## ref: https://github.com/esphome/esphome/pull/14389   and   https://github.com/sonocotta/esp32-audio-dock/blob/main/firmware/esphome/packages/snapclient-new.yaml
 external_components:
-  - source: github://c-MM/esphome-snapclient@main
+  - source: github://pr#14389
     components: [ snapclient ]
-    refresh: 0s
+    refresh: 24h
 
-snapclient:
-  name: M5Stack Atom Echo S3R
-  hostname: 192.168.41.189
-  # port: 1704  # default
-  # mute_pin: GPIO18  # Don't think this can work... don't really understand enough to have good reasons though.
-  # audio_dac: es8311_dac
-  # webserver_port: 8080  # start webserver for equalizer
-  i2s_dout_pin: GPIO48
-  sample_rate: 48000
-  bits_per_sample: 16bit
-  channel: mono
-  audio_dac: es8311_dac
-  # FIXME: Mix to mono?
+media_player:
+  - platform: snapclient
+    name: M5Stack Atom Echo S3R
+    hostname: "192.168.41.189"
+    # port: 1704
+    id: snapclient_media_player
+    i2s_dout_pin: GPIO48
+    # FIXME: Does this flatten L/R or does it just pick one?
+    channel: mono
+    audio_dac: es8311_dac
+    # I've set these to match audio_dac, but is that even useful? will snapclient just figure that out anyway?
+    bits_per_sample: 16bit
+    sample_rate: 4800
+
+    on_play:
+      - logger.log: "Playback started!"
+    on_pause:
+      - logger.log: "Playback paused!"
+    on_idle:
+      - logger.log: "Playback finished!"
 
