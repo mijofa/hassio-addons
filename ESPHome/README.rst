@@ -24,6 +24,48 @@ This is a hamfisted amalgamation of:
 * https://github.com/m5stack/esphome-yaml/tree/main/components/es8311  which really should've been mentioned in the atomic_audio_3.5_base page above
 * https://github.com/esphome/esphome/pull/14389
 
+::
+
+    wifi:
+      ssid: !secret wifi_ssid
+      password: !secret wifi_password
+      # # ref: https://github.com/esphome/esphome/pull/14389
+      # post_connect_roaming: false  # No resyncs after 5, 10 and 15 minutes
+    substitutions:
+      # The internal name used by ESPHome (use lowercase, no spaces, hyphens OK)
+      devicename: "m5s-atoms3lite-media-player"
+      # The friendly name shown in Home Assistant & Snapcast (can have spaces and capitals)
+      friendly_name: "Lounge room"
+      # Description of what this device does. I don't konw where this shows up.
+      device_comment: "Snapcast media player for the lounge room"
+
+      i2s_dout_pin: GPIO5
+      i2s_lrclk_pin: GPIO6
+      i2s_bclk_pin: GPIO8
+      i2c_sda: GPIO38
+      i2c_scl: GPIO39
+
+    packages:
+      remote_package_files:
+        url: https://github.com/mijofa/hassio-addons
+        files: [ESPHome/m5stack-atomic-audio3.5base-snapclient.yaml]
+        # FIXME: Rename this upstream, cool kids use 'main' now
+        ref: master
+        refresh: 0s
+    api:
+      encryption:
+        key: [redacted]
+    ota:
+      - platform: esphome
+    esp32:
+      board: esp32-s3-devkitc-1
+      flash_size: 8MB
+      variant: ESP32S3
+    logger:
+      baud_rate: 0
+      level: VERBOSE
+
+
 Notes
 -----
 We've noticed an annoying "pop" if unmuting after it's been muted for a while.
