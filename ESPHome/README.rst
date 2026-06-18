@@ -24,5 +24,13 @@ This is a hamfisted amalgamation of:
 * https://github.com/m5stack/esphome-yaml/tree/main/components/es8311  which really should've been mentioned in the atomic_audio_3.5_base page above
 * https://github.com/esphome/esphome/pull/14389
 
+Notes
+-----
+We've noticed an annoying "pop" if unmuting after it's been muted for a while.
+Sounds like capacitor discharge or similar, possibly ground leakage.
+There was similar (and much worse) crackling/popping sounds when I was powering it from the TV's USB socket instead of a separate power brick.
+I've swapped out some power bricks to something higher quality, going to see if that helps.
 
-
+This device is fairly low on RAM and something online warned pretty heavily against having snapserver's buffer size above 500.
+I have ignored that warning and set it to 1,000 and things have continued working.
+Not yet sure if that was a good idea
