@@ -174,18 +174,19 @@ pi4ioe5v6408:
   - id: pi4ioe5v6408_hub
     i2c_id: ext_bus
     address: 0x43
-switch:
-  - platform: gpio
-    name: "Speaker Enable"
-    id: speaker_enable
-    pin:
-      pi4ioe5v6408: pi4ioe5v6408_hub
-      number: 0
-      mode:
-        output: true
-    icon: "mdi:volume-high"
-    # FIXME: Use DEFAULT_ON instead to avoid any confusion if I forgot I turned it off before reboot?
-    restore_mode: RESTORE_DEFAULT_ON
+# You might need this switch if you replace snapcast with sendspin or similar
+# switch:
+#   - platform: gpio
+#     name: "Speaker Enable"
+#     id: speaker_enable
+#     pin:
+#       pi4ioe5v6408: pi4ioe5v6408_hub
+#       number: 0
+#       mode:
+#         output: true
+#     icon: "mdi:volume-high"
+#     # FIXME: Use DEFAULT_ON instead to avoid any confusion if I forgot I turned it off before reboot?
+#     restore_mode: RESTORE_DEFAULT_ON
 
 # ...#32-audio-configuration
 i2s_audio:
@@ -244,7 +245,11 @@ media_player:
     # hostname: harvest.mike.abrahall.id.au
     # port: 1704  # default
     name: ${friendly_name}
-    # mute_pin: 18
+    mute_pin:
+      pi4ioe5v6408: pi4ioe5v6408_hub
+      number: 0
+      mode:
+        output: true
     audio_dac: es8311_dac
     i2s_dout_pin: ${i2s_dout_pin}
     # i2s_dout_pin: GPIO5
@@ -254,7 +259,7 @@ media_player:
       - logger.log: "Playback paused!"
     on_idle:
       - logger.log: "Playback finished!"
-    on_state:
-      # FIXME: I would like to somehow flip a binary sensor or change an LED colour when the player is muted/unmuted.
-      #        Is this even possible?
-      - logger.log: "Playback State change!"
+    # on_state:
+    #   # FIXME: I would like to somehow flip a binary sensor or change an LED colour when the player is muted/unmuted.
+    #   #        Is this even possible?
+    #   - logger.log: "Playback State change!"
