@@ -239,7 +239,8 @@ media_player:
   - platform: snapclient
     # Don't show up in Home Assistant, because Home Assistant can't really use it anyway.
     # FIXME: Is it possible to associate the snapcast player with this device?
-    internal: true
+    internal: false
+    id: snapclient_media_player
     # hostname: harvest.mike.abrahall.id.au
     # port: 1704  # default
     name: ${friendly_name}
