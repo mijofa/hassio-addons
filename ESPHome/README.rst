@@ -34,7 +34,7 @@ This is a hamfisted amalgamation of:
     substitutions:
       # The internal name used by ESPHome (use lowercase, no spaces, hyphens OK)
       devicename: "m5s-atoms3lite-media-player"
-      # The friendly name shown in Home Assistant & Snapcast (can have spaces and capitals)
+      # The friendly name shown in Home-Assistant & Snapcast/Music-Assistant (can have spaces and capitals)
       friendly_name: "Lounge room"
       # Description of what this device does. I don't konw where this shows up.
       device_comment: "Snapcast media player for the lounge room"
@@ -44,14 +44,6 @@ This is a hamfisted amalgamation of:
       i2s_bclk_pin: GPIO8
       i2c_sda: GPIO38
       i2c_scl: GPIO39
-
-    packages:
-      remote_package_files:
-        url: https://github.com/mijofa/hassio-addons
-        files: [ESPHome/m5stack-atomic-audio3.5base-snapclient.yaml]
-        # FIXME: Rename this upstream, cool kids use 'main' now
-        ref: master
-        refresh: 0s
     api:
       encryption:
         key: [redacted]
@@ -64,6 +56,17 @@ This is a hamfisted amalgamation of:
     logger:
       baud_rate: 0
       level: VERBOSE
+    esphome:
+      name: ${devicename}
+      friendly_name: ${friendly_name}
+      comment: ${device_comment}
+    packages:
+      remote_package_files:
+        url: https://github.com/mijofa/hassio-addons
+        files: [ESPHome/m5stack-atomic-audio3.5base-snapclient.yaml]
+        # FIXME: Rename this upstream, cool kids use 'main' now
+        ref: master
+        refresh: 0s
 
 
 Notes

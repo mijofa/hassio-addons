@@ -30,131 +30,6 @@ esp32:
   framework:
     type: esp-idf
 
-# This worked, but I disabled it during dev as I wasn't sure if it was causing issues of using too much RAM.
-# Now I'm just afraid of turning it back on.
-# # ============================================================================
-# # RGB LED Strip - The 4 Colorful LEDs
-# # ============================================================================
-# # The ATOM S3 Lite has 4 RGB LEDs built-in on GPIO35
-# # Documentation: https://esphome.io/components/light/fastled/
-# light:
-#   - platform: esp32_rmt_led_strip
-#     chipset: WS2812
-  
-#   # # Use FastLED library for addressable LED control
-#   # - platform: fastled_clockless
-
-#   #   # WS2812B is the type of LED chip used
-#   #   chipset: WS2812B
-
-#     # The LEDs are connected to GPIO35 on the board
-#     pin: GPIO35
-
-#     # There are 4 LEDs in the strip
-#     num_leds: 4
-
-#     # GRB is the color order for these specific LEDs (Green-Red-Blue)
-#     rgb_order: GRB
-
-#     # Internal ID to reference these LEDs in automations
-#     id: led
-
-#     # The name that appears in Home Assistant
-#     name: "${friendly_name} LED"
-
-#     # When device restarts, LEDs start OFF
-#     restore_mode: RESTORE_DEFAULT_OFF
-
-#     # Built-in light effects you can activate from Home Assistant
-#     effects:
-#       # Pulse effect: LEDs fade in and out smoothly
-#       - pulse:
-#           name: "Pulse"
-#           # How long each fade in/out takes (1 second)
-#           transition_length: 1s
-#           # How often to update the effect (1 second)
-#           update_interval: 1s
-
-#       # Strobe effect: LEDs flash on and off rapidly
-#       - strobe:
-#           name: "Strobe"
-
-#       # Random effect: LEDs change to random colors
-#       - random:
-#           name: "Random"
-#           # How long to transition between colors (5 seconds)
-#           transition_length: 5s
-#           # How often to pick a new random color (3 seconds)
-#           update_interval: 3s
-
-# I have no need of IR transmitter, so just turn this off completely
-# # ============================================================================
-# # IR Remote Transmitter - Infrared LED for Remote Control
-# # ============================================================================
-# # The ATOM S3 Lite has a built-in IR LED on GPIO4 for controlling TVs, etc.
-# # Documentation: https://esphome.io/components/remote_transmitter/
-# remote_transmitter:
-#   # The IR LED is connected to GPIO4
-#   pin: GPIO4
-
-#   # Carrier duty cycle controls IR signal strength (50% is standard)
-#   carrier_duty_percent: 50%
-
-#   # Internal ID to reference the IR transmitter in automations
-#   id: ir_transmitter
-
-#   # Non-blocking allows other code to run while IR signal is being sent
-#   non_blocking: true
-
-# Useful for Home Assistant, nothing else.
-# I can't find any way to make the button directly trigger a snapclient mute or similar, sadly.
-# # ============================================================================
-# # Binary Sensors - On/Off Sensors
-# # ============================================================================
-# binary_sensor:
-#   # Status Sensor - Shows if device is online or offline in Home Assistant
-#   - platform: status
-#     # The name that appears in Home Assistant
-#     name: "${friendly_name} Status"
-#
-#   # Physical Button - The built-in button on GPIO41
-#   - platform: gpio
-#     # The name that appears in Home Assistant
-#     name: "${friendly_name} Button"
-#
-#     # Button configuration
-#     pin:
-#       # The button is connected to GPIO41
-#       number: GPIO41
-#
-#       # Inverted means pressed=LOW, released=HIGH (common for buttons with pullup)
-#       inverted: true
-#
-#       # Pin mode configuration
-#       mode:
-#         # Configure as input (reads signal)
-#         input: true
-#
-#         # Enable internal pullup resistor (keeps pin HIGH when button not pressed)
-#         pullup: true
-#
-#     # Filters clean up the button signal
-#     filters:
-#       # Debouncing: Ignore button bouncing for 10 milliseconds
-#       - delayed_off: 10ms
-#
-#     # WTF is this in the default upstream config?
-#     # I have no use in the IR transmitter, and certainly don't need it for this specific TV
-#     # # Action to perform when button is pressed
-#     # on_press:
-#     #   then:
-#     #     # Send Samsung TV power signal via IR LED
-#     #     - remote_transmitter.transmit_samsung:
-#     #         # Samsung TV power code (change this for other devices)
-#     #         data: 0xE0E040BF
-#
-#     #     # Write a message to the logs for debugging
-#     #     - logger.log: "Samsung TV Power Signal sent"
 
 # ref: https://docs.m5stack.com/en/homeassistant/media_player/atomic_audio_3.5_base
 # ...#31-basic-configuration
@@ -210,7 +85,8 @@ audio_dac:
 #   - platform: i2s_audio
 #     id: i2s_speaker
 #     i2s_audio_id: i2s_audio_bus
-#     i2s_dout_pin: GPIO5
+#     i2s_dout_pin: ${i2s_dout_pin}
+#     # i2s_dout_pin: GPIO5
 #     dac_type: external
 #     audio_dac: es8311_dac
 #     sample_rate: 48000
