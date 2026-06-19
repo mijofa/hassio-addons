@@ -33,13 +33,15 @@ i2c:
 # ...#35-speaker-amplifier-configuration
 # This is a "port extender" it just gives you more GPIO over I2C.
 # It is only used for this 1 single "speaker enable" PIN,
-# without it the builtin amp won't turn on.
+# without it the builtin speaker won't turn on.
+# It isn't useful to use because we don't care for the builtin speaker,
+# only the 3.5" socket
 # FIXME: Consider marking this internal and always on.
 # FIXME: Can we switch this on/off from firmware when snapcast mutes/unmutes?
-pi4ioe5v6408:
-  - id: pi4ioe5v6408_hub
-    i2c_id: ext_bus
-    address: 0x43
+# pi4ioe5v6408:
+#   - id: pi4ioe5v6408_hub
+#     i2c_id: ext_bus
+#     address: 0x43
 # switch:
 #   # This GPIO pin ONLY affects the internal speaker, not the dac itself.
 #   # Making it effectively useless to me, so might as well not have it.
@@ -106,9 +108,9 @@ audio_dac:
 # Uncomment this section for snapcast instead of sendspin
 media_player:
   - platform: snapclient
-    # Don't show up in Home Assistant, because Home Assistant can't really use it anyway.
+    # Don't show up in Home Assistant, because Home Assistant can't really do anything with it anyway.
     # FIXME: Is it possible to associate the snapcast player with this device?
-    internal: false
+    internal: true
     id: snapclient_media_player
     # hostname: harvest.mike.abrahall.id.au
     # port: 1704  # default
@@ -119,15 +121,25 @@ media_player:
     #   number: 0
     #   mode:
     #     output: true
-    audio_dac: es8311_dac
+    # audio_dac: es8311_dac
     i2s_dout_pin: ${i2s_dout_pin}
     # i2s_dout_pin: GPIO5
     on_play:
       - logger.log: "Playback started!"
+      # - audio_dac.mute_off:
+      #     id: es8311_dac
+      - audio_dac.set_volume:
+          id: es8311_dac
+          # I've seen indication that I should sit between 0.5 & 0.8, so let's split the difference and go with 0.65
+          volume: 65%
     on_pause:
       - logger.log: "Playback paused!"
+      # - audio_dac.mute_on:
+      #     id: es8311_dac
     on_idle:
       - logger.log: "Playback finished!"
+      # - audio_dac.mute_on:
+      #     id: es8311_dac
     # on_state:
     #   # FIXME: I would like to somehow flip a binary sensor or change an LED colour when the player is muted/unmuted.
     #   #        Is this even possible?

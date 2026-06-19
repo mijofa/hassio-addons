@@ -17,6 +17,7 @@ Code
 Use ESPHome Device Builder with m5stack-atoms3-lite-snapclient.yaml.
 I did so with the dev build on 2026-06-18, but it should work with the stable version at that time and newer.
 For posterity, it is version 2026.7.0-dev20260618 in Home Assistant.
+UPDATE: I've since rebuilt with stable version 2026.6.1
 
 This is a hamfisted amalgamation of:
 * https://devices.esphome.io/devices/m5stack-atoms3-lite/
