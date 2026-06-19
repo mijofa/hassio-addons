@@ -56,7 +56,8 @@ This is a hamfisted amalgamation of:
       variant: ESP32S3
     logger:
       baud_rate: 0
-      level: VERBOSE
+      # level: DEBUG
+      level: INFO
     esphome:
       name: ${devicename}
       friendly_name: ${friendly_name}
@@ -68,6 +69,92 @@ This is a hamfisted amalgamation of:
         # FIXME: Rename this upstream, cool kids use 'main' now
         ref: master
         refresh: 0s
+
+
+I was able to make the physical button toggle mute status with this
+NOTE, it currently won't work on older pre-http versions of Snapserver, and doesn't currently support mdns.
+I want to fix both these issues, but haven't yet found the right building blocks for either of those
+
+::
+
+    http_request:
+    text_sensor:
+      - platform: wifi_info
+        mac_address:
+          internal: true
+          id: mac_address
+    number:
+      - platform: template
+        internal: false
+        optimistic: true
+        id: percent_template
+        min_value: 0
+        max_value: 100
+        step: 1
+    binary_sensor:
+      - platform: template
+        internal: false
+        id: muted_template
+      # Physical Button - The built-in button on GPIO41
+      - platform: gpio
+        # The name that appears in Home Assistant
+        name: "${friendly_name} Button"
+        pin:
+          number: GPIO41
+          inverted: true
+          mode:
+            input: true
+            pullup: true
+        # Filters clean up the button signal
+        filters:
+          # Debouncing: Ignore button bouncing for 10 milliseconds
+          - delayed_off: 10ms
+        # FIXME: Use the 1705 JSON-RPC port instead of the HTTP one so that it can work better with older versions of snapserver
+        # FIXME: Use mDNS
+        on_press:
+          - then:
+              - logger.log:
+                  level: INFO
+                  format: "Button pressed: %s"
+                  args:
+                    - id(mac_address).state.c_str()
+              - http_request.post:
+                  url: http://harvest.mike.abrahall.id.au:1780/jsonrpc
+                  request_headers:
+                    Content-Type: application/json
+                  json: |-
+                    root["id"] = 1;
+                    root["jsonrpc"] = "2.0";
+                    root["method"] = "Client.GetStatus";
+                    root["params"]["id"] = id(mac_address).state.c_str();
+                  capture_response: true
+                  on_response:
+                      - if:
+                          condition:
+                            lambda: return response->status_code == 200;
+                          then:
+                            - logger.log:
+                                level: DEBUG
+                                format: "Good response: %s"
+                                args:
+                                  - body.c_str()
+                            - lambda:
+                                json::parse_json(body, [](JsonObject root) -> bool {
+                                    id(percent_template).publish_state(root["result"]["client"]["config"]["volume"]["percent"]);
+                                    id(muted_template).publish_state(root["result"]["client"]["config"]["volume"]["muted"]);
+                                    return true;
+                                });
+              - http_request.post:
+                  url: http://harvest.mike.abrahall.id.au:1780/jsonrpc
+                  request_headers:
+                    Content-Type: application/json
+                  json: |-
+                    root["id"] = 1;
+                    root["jsonrpc"] = "2.0";
+                    root["method"] = "Client.SetVolume";
+                    root["params"]["id"] = id(mac_address).state.c_str();
+                    root["params"]["volume"]["percent"] = id(percent_template).state;
+                    root["params"]["volume"]["muted"] = !id(muted_template).state;
 
 
 Notes
