@@ -112,7 +112,7 @@ media_player:
     # FIXME: Is it possible to associate the snapcast player with this device?
     internal: true
     id: snapclient_media_player
-    # hostname: harvest.mike.abrahall.id.au
+    hostname: ${snapserver_hostname}
     # port: 1704  # default
     name: ${friendly_name}
     # FIXME: This pin ONLY affects the internal speaker, not the dac itself.
