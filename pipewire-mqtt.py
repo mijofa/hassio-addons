@@ -227,6 +227,14 @@ for ev in pipewire_events():
                     subtract_stream(ev['id'])
                     continue
 
+                # Fuck off Cloudflare!!
+                proc_bin_name = ev['info']['props'].get('application.process.binary', '')
+                if (ev['info']['props'].get('media.name', False) == "Checking your Browser…" and
+                        ('firefox' in proc_bin_name or 'chrome' in proc_bin_name or 'chromium' in proc_bin_name)):
+                    # If I leave a cloudflare tab open, it just keeps spamming new "Checking your Browser…" players constantly.
+                    # It doesn't actually make any sound, and it's annoying as hell.
+                    continue
+
                 # FIXME: WTF is this titlecased?
                 stream_role: str = ev['info']['props'].get('media.role', 'other').lower()
                 if stream_role == 'communication':
