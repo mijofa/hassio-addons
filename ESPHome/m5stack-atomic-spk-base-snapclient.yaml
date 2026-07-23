@@ -19,7 +19,6 @@ i2s_audio:
   - id: i2s_audio_bus
     i2s_lrclk_pin: ${i2s_lrclk_pin}
     i2s_bclk_pin: ${i2s_bclk_pin}
-    i2s_mclk_pin: ${i2s_mclk_pin}
 
 # Uncomment this section for sendspin instead of snapcast
 # FIXME: Barely tested
