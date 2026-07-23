@@ -1,11 +1,4 @@
 external_components:
-  # I couldn't find mention of this in m5stack's docs, but I found it somewhere online and it made things work.
-  # Without this, the amp turned on and silent/static came out during playback, but no actual audio
-  # See https://github.com/m5stack/esphome-yaml/tree/main/components/es8311 for info
-  # FIXME: Can I remove this and just set `use_mclk: false`? Looks like that's already set
-  - source: github://m5stack/esphome-yaml/components@main
-    components: [es8311]
-    refresh: 1d
   # https://github.com/esphome/esphome/pull/14389
   - source: github://pr#14389
     components: [ snapclient, media_player ]
@@ -21,57 +14,12 @@ esp32:
   framework:
     type: esp-idf
 
-
-# ref: https://docs.m5stack.com/en/homeassistant/media_player/atomic_audio_3.5_base
-# ...#31-basic-configuration
-i2c:
-  - id: ext_bus
-    # sda: GPIO38
-    sda: ${i2c_sda}
-    # scl: GPIO39
-    scl: ${i2c_scl}
-# ...#35-speaker-amplifier-configuration
-# This is a "port extender" it just gives you more GPIO over I2C.
-# It is only used for this 1 single "speaker enable" PIN,
-# without it the builtin speaker won't turn on.
-# It isn't useful to use because we don't care for the builtin speaker,
-# only the 3.5" socket
-# FIXME: Consider marking this internal and always on.
-# FIXME: Can we switch this on/off from firmware when snapcast mutes/unmutes?
-pi4ioe5v6408:
-  - id: pi4ioe5v6408_hub
-    i2c_id: ext_bus
-    address: 0x43
-# switch:
-#   # This GPIO pin ONLY affects the internal speaker, not the dac itself.
-#   # Making it effectively useless to me, so might as well not have it.
-#   - platform: gpio
-#     name: "Speaker Enable"
-#     id: speaker_enable
-#     pin:
-#       pi4ioe5v6408: pi4ioe5v6408_hub
-#       number: 0
-#       mode:
-#         output: true
-#     icon: "mdi:volume-high"
-#     # FIXME: This should probably be ALWAYS_OFF and trust snapclient to turn it on after a reboot?
-#     restore_mode: ALWAYS_OFF
-
-# ...#32-audio-configuration
+# Main ref: https://community.home-assistant.io/t/solved-esphome-media-player-with-m5stack-spk-kit-and-atoms3-lite/784663
 i2s_audio:
   - id: i2s_audio_bus
-    # i2s_lrclk_pin: GPIO6
     i2s_lrclk_pin: ${i2s_lrclk_pin}
-    # i2s_bclk_pin: GPIO8
     i2s_bclk_pin: ${i2s_bclk_pin}
-audio_dac:
-  - platform: es8311
-    id: es8311_dac
-    i2c_id: ext_bus
-    bits_per_sample: 16bit
-    sample_rate: 48000
-    use_microphone: false
-    use_mclk: false
+    i2s_dout_pin: ${i2s_dout_pin}
 
 # Uncomment this section for sendspin instead of snapcast
 # FIXME: Barely tested
@@ -105,6 +53,14 @@ audio_dac:
 #       sources:
 #         - sendspin_media_source
 
+
+media_player:
+  - platform: i2s_audio
+    id: media_out
+    name: None
+    dac_type: external
+    i2s_dout_pin: GPIO38
+    mode: mono
 # Uncomment this section for snapcast instead of sendspin
 media_player:
   - platform: snapclient
@@ -115,35 +71,12 @@ media_player:
     hostname: ${snapserver_hostname}
     # port: 1704  # default
     name: ${friendly_name}
-    # FIXME: This pin ONLY affects the internal speaker, not the dac itself.
-    mute_pin:
-      pi4ioe5v6408: pi4ioe5v6408_hub
-      number: 0
-      mode:
-        output: true
-    # audio_dac: es8311_dac
     i2s_dout_pin: ${i2s_dout_pin}
-    # i2s_dout_pin: GPIO5
     on_play:
       - logger.log: "Playback started!"
-      - audio_dac.mute_off:
-          id: es8311_dac
-      - audio_dac.set_volume:
-          id: es8311_dac
-          # I've seen indication that I should sit between 0.5 & 0.8, so let's split the difference and go with 0.65
-          volume: 62%
-      # - switch.turn_on: speaker_enable
     on_pause:
       - logger.log: "Playback paused!"
-      - audio_dac.mute_on:
-          id: es8311_dac
-      # - switch.turn_off: speaker_enable
     on_idle:
       - logger.log: "Playback finished!"
-      - audio_dac.mute_on:
-          id: es8311_dac
-      # - switch.turn_off: speaker_enable
-    # on_state:
-    #   # FIXME: I would like to somehow flip a binary sensor or change an LED colour when the player is muted/unmuted.
-    #   #        Is this even possible?
-    #   - logger.log: "Playback State change!"
+    on_state:
+      - logger.log: "Playback State change!"
