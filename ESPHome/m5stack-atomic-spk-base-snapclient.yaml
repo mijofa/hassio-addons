@@ -14,12 +14,12 @@ esp32:
   framework:
     type: esp-idf
 
-# Main ref: https://community.home-assistant.io/t/solved-esphome-media-player-with-m5stack-spk-kit-and-atoms3-lite/784663
-i2s_audio:
-  - id: i2s_audio_bus
-    i2s_lrclk_pin: ${i2s_lrclk_pin}
-    i2s_bclk_pin: ${i2s_bclk_pin}
-    i2s_dout_pin: ${i2s_dout_pin}
+## Main ref: https://community.home-assistant.io/t/solved-esphome-media-player-with-m5stack-spk-kit-and-atoms3-lite/784663
+#i2s_audio:
+#  - id: i2s_audio_bus
+#    i2s_lrclk_pin: ${i2s_lrclk_pin}
+#    i2s_bclk_pin: ${i2s_bclk_pin}
+#    i2s_dout_pin: ${i2s_dout_pin}
 
 # Uncomment this section for sendspin instead of snapcast
 # FIXME: Barely tested
@@ -64,6 +64,8 @@ media_player:
     hostname: ${snapserver_hostname}
     # port: 1704  # default
     name: ${friendly_name}
+    i2s_lrclk_pin: ${i2s_lrclk_pin}
+    i2s_bclk_pin: ${i2s_bclk_pin}
     i2s_dout_pin: ${i2s_dout_pin}
     on_play:
       - logger.log: "Playback started!"
