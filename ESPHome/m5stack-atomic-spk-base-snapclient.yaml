@@ -54,13 +54,6 @@ i2s_audio:
 #         - sendspin_media_source
 
 
-media_player:
-  - platform: i2s_audio
-    id: media_out
-    name: None
-    dac_type: external
-    i2s_dout_pin: GPIO38
-    mode: mono
 # Uncomment this section for snapcast instead of sendspin
 media_player:
   - platform: snapclient
