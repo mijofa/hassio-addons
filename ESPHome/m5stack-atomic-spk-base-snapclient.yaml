@@ -64,7 +64,6 @@ media_player:
     # port: 1704  # default
     name: ${friendly_name}
     i2s_dout_pin: ${i2s_dout_pin}
-    channel: left
     on_play:
       - logger.log: "Playback started!"
     on_pause:
