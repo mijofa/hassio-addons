@@ -60,7 +60,7 @@ media_player:
     # FIXME: Is it possible to associate the snapcast player with this device?
     internal: true
     id: snapclient_media_player
-    hostname: ${snapserver_hostname}
+    # hostname:  # Uses mDNS by default
     # port: 1704  # default
     name: ${friendly_name}
     i2s_dout_pin: ${i2s_dout_pin}
