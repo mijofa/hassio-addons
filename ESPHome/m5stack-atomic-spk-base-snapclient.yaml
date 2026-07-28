@@ -1,11 +1,11 @@
 external_components:
-  # https://github.com/esphome/esphome/pull/14389
-  - source: github://pr#14389
-    components: [ snapclient, media_player ]
-    refresh: 1d
-  # - source: github://mijofa/esphome-luar123-snapclient@snapclient2
+  # # https://github.com/esphome/esphome/pull/14389
+  # - source: github://pr#14389
   #   components: [ snapclient, media_player ]
-  #   refresh: 0s
+  #   refresh: 1d
+  - source: github://mijofa/esphome-luar123-snapclient@snapclient2
+    components: [ snapclient, media_player ]
+    refresh: 0s
 
 # ============================================================================
 # ESP32 Hardware Configuration
