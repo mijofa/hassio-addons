@@ -1,0 +1,195 @@
+substitutions:
+  # ref: https://docs.m5stack.com/en/atom/Atomic_Audio-3.5_Base#compatible
+  # These are the pins used by the AtomS3R.
+  # You should redefine them regardless as I may change my mind what I want to use by default
+  audio_base_pin_scl: GPIO39
+  audio_base_pin_sda: GPIO38
+  audio_base_pin_din: GPIO5
+  audio_base_pin_lrck: GPIO6
+  audio_base_pin_dout: GPIO7
+  audio_base_pin_sck: GPIO8
+
+  # FIXME: Can I make this into a runtime configurable select entity in Home Assistant?
+  audio_base_channel: mono
+  audio_base_sample_rate: 32000  # DO NOT CHANGE without also updating the silent flac file as needed
+  sendspin_buffer_size: 25000
+
+esphome:
+  on_boot:
+    - delay: 5s
+    - media_player.mute:
+        # Should be unnecessary since the max_vol is 0%, but shouldn't hurt.
+        id: media_player_silence
+    - media_player.play_media:
+        id: media_player_silence
+        media_url: audio-file://silence
+    - media_player.repeat_one:
+        id: media_player_silence
+
+external_components:
+  - source: github://m5stack/esphome-yaml/components@main
+    components:
+      # I couldn't find mention of this in m5stack's docs, but I found it somewhere online and it made things work.
+      # Without this, the amp turned on and silent/static came out during playback, but no actual audio
+      # See https://github.com/m5stack/esphome-yaml/tree/main/components/es8311 for info
+      # It really should be mentioned somewhere here, but isn't: https://docs.m5stack.com/en/atom/Atomic_Audio-3.5_Base
+      # FIXME: Can I remove this and just set `use_mclk: false`? UPDATE: No
+      - es8311
+    refresh: 1d
+    #
+### i2c/i2s communication bus
+i2c:
+  - id: audio_base_i2c_bus
+    sda: "${audio_base_pin_sda}"
+    scl: "${audio_base_pin_scl}"
+i2s_audio:
+  - id: audio_base_i2s_audio
+    i2s_lrclk_pin: "${audio_base_pin_lrck}"
+    i2s_bclk_pin: "${audio_base_pin_sck}"
+
+### Speaker Enable switch
+# The audio base uses a pin extender for just 1 single pin.
+# Mostly because they've designed the Atom connector pins with not much space for anything but the i2s/i2c bus.
+pi4ioe5v6408:
+  - id: audio_base_pi4ioe5v6408
+    i2c_id: audio_base_i2c_bus
+    address: 0x43
+switch:
+  - platform: gpio
+    # Note this affects ONLY the internal speaker, not the dac itself or 3.5 output.
+    # Making it effectively useless in most situations
+    id: audio_base_speaker_enable
+    pin:
+      pi4ioe5v6408: audio_base_pi4ioe5v6408
+      number: 0
+      mode:
+        output: true
+    # We deal with this internally, Home Assistant doesn't need to know about it
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+### Audio DAC for volume control
+# This DAC is what's causing the loud pop when silent for a bit
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: audio_base_i2c_bus
+    bits_per_sample: 16bit
+    sample_rate: "${audio_base_sample_rate}"
+    use_microphone: false
+    use_mclk: false
+
+### Speaker output
+speaker:
+  # This is the actual audio output of the audio base itself
+  - platform: i2s_audio
+    id: audio_base_i2s_speaker
+    i2s_audio_id: audio_base_i2s_audio
+    i2s_dout_pin: "${audio_base_pin_din}"
+    dac_type: external
+    audio_dac: es8311_dac
+    sample_rate: "${audio_base_sample_rate}"
+    channel: "${audio_base_channel}"
+  # This is a mixer which combines the various media players into a single output
+  - platform: mixer
+    id: audio_base_mixer
+    output_speaker: audio_base_i2s_speaker
+    # num_channels: 1
+    num_channels: 2
+    source_speakers:
+      - id: audio_base_mixer_input_sendspin
+      - id: audio_base_mixer_input_silence
+
+### Media player inputs
+audio_file:
+  # Simply a silent audio file, no one should know it's playing
+  - id: silence
+    # FIXME: Document the generation of this file!
+    # FIXME: Put this file in the git repo!
+    # I generated this with Audacity, by generating 5s of silence and exporting it according to the specs described in the filename
+    # FIXME: Can we have esphome convert/resample (or even generate) this when compiling?
+    #        I know we can at runtime, but that's more heavy-lifting than I want
+    file: "sounds/silence-5s-stereo-16bit-${audio_base_sample_rate}hz.flac"
+sendspin:
+  # The sendspin hub itself, we can't use sendspin without it
+  id: sendspin_hub
+
+media_source:
+  - platform: audio_file
+    id: media_source_silence
+
+  - platform: sendspin
+    id: media_source_sendspin
+    buffer_size: "${sendspin_buffer_size}"
+    # This sample_rate MUST match the sample_rate of the silence audio_file, otherwise the mixer fails.
+    # This can be worked around with a resampler, but that would run locally on the esp32.
+    # Specifying it here should offload it to the sendspin server.
+    # ref: https://esphome.io/components/speaker/mixer/#:~:text=must%20have%20the%20same%20sample%20rate%2E
+    sample_rate: "${audio_base_sample_rate}"
+media_player:
+  # This does nothing except play silence on loop, forever
+  # FIXME: Reduce the log level of this media_player (and/or the source?) because it drops a log message every loop
+  - platform: speaker_source
+    id: media_player_silence
+    # Try to hide this from the end user
+    internal: true
+    # Don't let it make any audible sound
+    volume_max: 0
+    volume_initial: 0
+    volume_increment: 0
+    media_pipeline:
+      speaker: audio_base_mixer_input_silence
+      sources:
+        - media_source_silence
+
+  # Actually play sound from Sendspin
+  - platform: speaker_source
+    id: media_player_sendspin
+    # No point showing this to Home Assistant because Music Assistant will do that for us.
+    # FIXME: Can I have Home Assistant combine the ESPHome device with the Music Assistant one?
+    internal: true
+    # FIXME: These numbers were used by m5stack upstream, are they reasonable?
+    volume_min: 0.5
+    volume_max: 0.8
+    media_pipeline:
+      speaker: audio_base_mixer_input_sendspin
+      format: FLAC
+      sample_rate: "${audio_base_sample_rate}"
+      num_channels: "1"
+      sources:
+        - media_source_sendspin
+    on_mute:
+      then:
+        # - logger.log: "Sendspin Muted"
+        - switch.turn_off: audio_base_speaker_enable
+    on_idle:
+      then:
+        # - logger.log: "Sendspin Idle"
+        - switch.turn_off: audio_base_speaker_enable
+    on_pause:
+      then:
+        # - logger.log: "Sendspin Pause"
+        - switch.turn_off: audio_base_speaker_enable
+    on_turn_off:
+      then:
+        # - logger.log: "Sendspin Turn off"
+        - switch.turn_off: audio_base_speaker_enable
+    on_unmute:
+      then:
+        # - logger.log: "Sendspin Unmuted"
+        - switch.turn_on: audio_base_speaker_enable
+    on_play:
+      then:
+        # - logger.log: "Sendspin Play"
+        - switch.turn_on: audio_base_speaker_enable
+    on_announcement:
+      then:
+        # - logger.log: "Sendspin Announcement"
+        - switch.turn_on: audio_base_speaker_enable
+    # FIXME: Can I use on_state with a simple on/off if statement?
+    # on_state:
+    #   then:
+    #     - logger.log:
+    #         format: "Sendspin state: %s"
+    #         args:
+    #           - !lambda id(media_player_sendspin).state
