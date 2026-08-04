@@ -12,6 +12,7 @@ substitutions:
   # FIXME: Can I make this into a runtime configurable select entity in Home Assistant?
   audio_base_channel: mono
   audio_base_sample_rate: 32000  # DO NOT CHANGE without also updating the silent flac file as needed
+  sendspin_use_psram: false
   sendspin_buffer_size: 25000
 
 esphome:
@@ -93,6 +94,7 @@ speaker:
   # This is a mixer which combines the various media players into a single output
   - platform: mixer
     id: audio_base_mixer
+    task_stack_in_psram: "${sendspin_use_psram}"
     output_speaker: audio_base_i2s_speaker
     # num_channels: 1
     num_channels: 2
@@ -113,6 +115,7 @@ audio_file:
 sendspin:
   # The sendspin hub itself, we can't use sendspin without it
   id: sendspin_hub
+  task_stack_in_psram: "${sendspin_use_psram}"
 
 media_source:
   - platform: audio_file
@@ -120,6 +123,7 @@ media_source:
 
   - platform: sendspin
     id: media_source_sendspin
+    task_stack_in_psram: "${sendspin_use_psram}"
     buffer_size: "${sendspin_buffer_size}"
     # This sample_rate MUST match the sample_rate of the silence audio_file, otherwise the mixer fails.
     # This can be worked around with a resampler, but that would run locally on the esp32.
