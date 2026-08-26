@@ -1,12 +1,16 @@
 #!/usr/bin/python3
 """Connect screensaver state to Home Assistant."""
 import sys
+import os
+import pathlib
 import dns.resolver
 import json
 import socket
 import subprocess
 import uuid
 import typing
+
+import pyotp
 
 import paho.mqtt.client
 import dbus
@@ -114,18 +118,45 @@ def command_callback(client, unknown, message):
     command = message.payload.decode().split()
     print('mqtt>', command[0] if len(command) == 1 else f'{command[0]} [REDACTED]', flush=True)
     if command[0] == 'LOCK':
-        # FIXME: Should I do anything if a code is provided?
+        # FIXME: Should I do anything if a code is provided here?
         # FIXME: '1' is a magic number for the "first" session, how do we avoid this?
         return login1_manager.LockSession('1')
     if command[0] == 'UNLOCK':
         # FIXME: '1' is a magic number for the "first" session, how do we avoid this?
-        # Raising an exception here would kill the mqtt client, we don't want that
-        print(NotImplementedError("FIXME: Think of a good way to unlock with a code"))
-        return login1_manager.ActivateSession('1')
-        # return # login1_manager.UnlockSession('1')
+        if totp is None:
+            # Raising an exception here would kill the mqtt client, we don't want that
+            print(NotImplementedError("TOTP not setup, can't unlock via MQTT"), file=sys.stderr, flush=True)
+            return login1_manager.ActivateSession('1')
+        elif totp is not None and len(command) == 1:
+            # Raising an exception here would kill the mqtt client, we don't want that
+            # FIXME: This exception type is wrong?
+            print(NotImplementedError("Can't unlock without providing an unlock code"), file=sys.stderr, flush=True)
+            return login1_manager.ActivateSession('1')
+        elif totp is not None and len(command) == 2 and command[1].isdigit():
+            # FIXME: Put more effort into tuning valid_window, or make it configurable
+            # NOTE: Must remain a str despite 'isdigit' above, because the leading 0s are relevant
+            if totp.verify(command[1], valid_window=1):
+                print('Correct OTP code provided, unlocking', flush=True)
+                return login1_manager.UnlockSession('1')
+            else:
+                # Raising an exception here would kill the mqtt client, we don't want that
+                print("WARNING: Incorrect OTP provided, ignoring", file=sys.stderr, flush=True)
+                return
+        else:
+            # Raising an exception here would kill the mqtt client, we don't want that
+            print("Incorrect unlock instruction provided, ignoring", file=sys.stderr, flush=True)
+            return
     else:
-        print('Only locking is supported, or (maybe) unlocking with a code. Recieved', command, file=sys.stderr)
+        print('Unsupported command recieved:', command, file=sys.stderr, flush=True)
         return
+
+global totp
+if 'CREDENTIALS_DIRECTORY' in os.environ:
+    totp = pyotp.parse_uri((pathlib.Path(os.environ.get('CREDENTIALS_DIRECTORY')) / pathlib.Path('otpauth_uri')).read_text())
+else:
+    totp = None
+    # import pyotp, socket; pyotp.TOTP(s=pyotp.random_base32(), issuer='mijofa/logind-mqtt.py', name=socket.gethostname()).provisioning_uri()
+    print("You should setup totp...", file=sys.stderr)
 
 
 mqtt_client = paho.mqtt.client.Client()
