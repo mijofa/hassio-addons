@@ -36,6 +36,10 @@ def mqtt_discovery(mqtt_client):
     mac_address = f'{uuid.getnode():02x}'
     unique_id = ':'.join(mac_address[i:i + 2] for i in range(0, len(mac_address), 2))
 
+    state_topic = '/'.join((MQTT_TOPIC_BASE, "state"))
+    attributes_topic = '/'.join((MQTT_TOPIC_BASE, "attributes"))
+    command_topic = '/'.join((MQTT_TOPIC_BASE, "command"))
+
     mqtt_client.publish(topic='/'.join((MQTT_TOPIC_BASE, "config")),
                         payload=json.dumps({
                             "availability_topic": AVAILABILITY_TOPIC,
@@ -46,17 +50,17 @@ def mqtt_discovery(mqtt_client):
                             # "category": "config/diagnostic",  # FIXME: wtf is this?
                             "icon": "mdi:monitor-lock",
                             # FIXME: Not currently sending attributes anywhere
-                            "json_attributes_topic": '/'.join((MQTT_TOPIC_BASE, "attributes")),
+                            "json_attributes_topic": attributes_topic,
                             "name": "Screensaver",
-                            "state_topic": '/'.join((MQTT_TOPIC_BASE, "state")),
-                            "command_topic": '/'.join((MQTT_TOPIC_BASE, "command")),
+                            "state_topic": state_topic,
+                            "command_topic": command_topic,
                             "command_template": '{{ value }}{% if code is not none %} {{ code }}{% endif %}',
                             "code_format": r"^(\d+|.+)?$",
                             "retain": False,  # Tells Home Assistant to NOT mark commands for retainment in mqtt
                         }),
                         retain=True)
 
-    return '/'.join((MQTT_TOPIC_BASE, "state")), '/'.join((MQTT_TOPIC_BASE, "command"))
+    return state_topic, command_topic
 
 
 # Since upstream **still** hasn't fixed this 3yr old bug
