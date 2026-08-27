@@ -92,7 +92,7 @@ def command_callback(client, unknown, message):
             # NOTE: Must remain a str despite 'isdigit' above, because the leading 0s are relevant
             if totp.verify(command[1], valid_window=1):
                 print('Correct OTP code provided, unlocking', flush=True)
-                return login1_manager.UnlockSession('1')
+                return login1_manager.UnlockSession('1'), login1_manager.ActivateSession('1')
             else:
                 # Raising an exception here would kill the mqtt client, we don't want that
                 print("WARNING: Incorrect OTP provided, ignoring", file=sys.stderr, flush=True)
