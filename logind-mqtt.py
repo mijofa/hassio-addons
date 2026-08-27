@@ -121,7 +121,7 @@ mqtt_client.will_set(topic=AVAILABILITY_TOPIC, payload='offline')
 # FIXME: Try anonymous, and fallback on guest:guest when that fails
 mqtt_client.username_pw_set(username='guest', password='guest')
 mqtt_client.connect_srv()
-mqtt_client.loop_start()
+# mqtt_client.loop_start()
 
 # FIXME: Notify Systemd that we're ready
 state_topic, command_topic = mqtt_discovery(mqtt_client)
@@ -129,9 +129,25 @@ state_topic, command_topic = mqtt_discovery(mqtt_client)
 mqtt_client.message_callback_add(sub=command_topic, callback=command_callback)
 mqtt_client.subscribe(topic=command_topic)
 
-# FIXME: Is this likely to conflict with the mqtt loop? Can we cleanup & connect them together regardless?
 DBusGMainLoop(set_as_default=True)
 loop = GLib.MainLoop()
+
+
+## Bypass paho.mqtt.client's loop and use GLib's instead
+def loop_mqtt_read(socket, condition):
+    assert socket == mqtt_client.socket()
+    assert condition == GLib.IO_IN
+    mqtt_client.loop_read()
+    return True
+def loop_mqtt_regularly():
+    if mqtt_client.want_write():
+        print("Running loop_write", flush=True)
+        mqtt_client.loop_write()
+    mqtt_client.loop_misc()
+    return True
+GLib.io_add_watch(mqtt_client.socket(), GLib.IO_IN, loop_mqtt_read)
+GLib.idle_add(loop_mqtt_regularly)
+
 
 bus = dbus.SystemBus()
 login1 = bus.get_object("org.freedesktop.login1", "/org/freedesktop/login1")
