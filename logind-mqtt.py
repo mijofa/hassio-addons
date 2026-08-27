@@ -145,16 +145,25 @@ loop = GLib.MainLoop()
 def loop_mqtt_read(socket, condition):
     assert socket == mqtt_client.socket()
     assert condition == GLib.IO_IN
-    mqtt_client.loop_read()
+    rc = mqtt_client.loop_read()
+    # FIXME: Raise a real exception here
+    assert rc == paho.mqtt.client.MQTTErrorCode.MQTT_ERR_SUCCESS
     return True
 def loop_mqtt_regularly():
     if mqtt_client.want_write():
-        print("Running loop_write", flush=True)
-        mqtt_client.loop_write()
-    mqtt_client.loop_misc()
+        # This handles sending data where publish was attempted during loop_read()
+        # Otherwise publish does so directly and doesn't require the loop
+        rc = mqtt_client.loop_write()
+        # FIXME: Raise a real exception here
+        assert rc == paho.mqtt.client.MQTTErrorCode.MQTT_ERR_SUCCESS
+    # This mostly just handles pings & keepalives
+    rc = mqtt_client.loop_misc()
+    # FIXME: Raise a real exception here
+    assert rc == paho.mqtt.client.MQTTErrorCode.MQTT_ERR_SUCCESS
     return True
 GLib.io_add_watch(mqtt_client.socket(), GLib.IO_IN, loop_mqtt_read)
-GLib.idle_add(loop_mqtt_regularly)
+# GLib.idle_add(loop_mqtt_regularly)
+GLib.timeout_add_seconds(1, loop_mqtt_regularly)
 
 
 bus = dbus.SystemBus()
