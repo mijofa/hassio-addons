@@ -114,7 +114,7 @@ else:
     print("You should setup totp...", file=sys.stderr)
 
 
-mqtt_client = paho.mqtt.client.Client()
+mqtt_client = paho.mqtt.client.Client(callback_api_version=paho.mqtt.client.CallbackAPIVersion.VERSION2)
 # NOTE: The will must be set before connecting.
 mqtt_client.will_set(topic=AVAILABILITY_TOPIC, payload='offline')
 
