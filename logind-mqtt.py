@@ -67,51 +67,6 @@ def mqtt_discovery(mqtt_client):
     return state_topic, command_topic
 
 
-# Since upstream **still** hasn't fixed this 3yr old bug
-# https://github.com/eclipse/paho.mqtt.python/issues/493
-# I've copy/pasted upstream's connect_srv function to fix it internally.
-# I've also pushed my own pull request for them
-# https://github.com/eclipse/paho.mqtt.python/pull/759
-# but I get the feeling it's going to be ignored
-# -- mijofa, 2023-10-23
-def connect_srv(mqtt_client, domain=None, *args, **kwargs):
-    """Connect to a remote broker.
-
-    domain is the DNS domain to search for SRV records; if None,
-    try to determine local domain name.
-    All other args are used as is for connect()
-    """
-    if domain is None:
-        domain = socket.getfqdn()
-        domain = domain[domain.find('.') + 1:]
-
-    try:
-        rr = '_mqtt._tcp.%s' % domain
-        if mqtt_client._ssl:
-            # IANA specifies secure-mqtt (not mqtts) for port 8883
-            rr = '_secure-mqtt._tcp.%s' % domain
-        answers = []
-        for answer in dns.resolver.resolve(rr, dns.rdatatype.SRV):
-            addr = answer.target.to_text()[:-1]
-            answers.append(
-                (addr, answer.port, answer.priority, answer.weight))
-    except (dns.resolver.NXDOMAIN,
-            dns.resolver.NoAnswer,
-            dns.resolver.NoNameservers):
-        raise ValueError("No answer/NXDOMAIN for SRV in %s" % (domain))
-
-    # FIXME: doesn't account for weight
-    for answer in answers:
-        host, port, prio, weight = answer
-
-        try:
-            return mqtt_client.connect(host, port, *args, **kwargs)
-        except Exception:
-            raise
-
-    raise ValueError("No SRV hosts responded")
-
-
 def command_callback(client, unknown, message):
     if message.topic != command_topic:
         raise Exception("Callback called from the wrong topic")
@@ -165,7 +120,7 @@ mqtt_client.will_set(topic=AVAILABILITY_TOPIC, payload='offline')
 
 # FIXME: Try anonymous, and fallback on guest:guest when that fails
 mqtt_client.username_pw_set(username='guest', password='guest')
-connect_srv(mqtt_client)
+mqtt_client.connect_srv()
 mqtt_client.loop_start()
 
 # FIXME: Notify Systemd that we're ready
