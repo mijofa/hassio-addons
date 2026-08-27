@@ -190,7 +190,7 @@ def handle_dbus_property_update(interface: str,
     #     payload = 'UNLOCKING'
     elif LockedHint == True:
         payload = 'LOCKED'
-    elif LockedHint == False and IdleHint == True:
+    elif LockedHint == False and IdleHint == True and 'LockedHint' not in changed_properties:
         # Screen blanked before locked? Idle timeout occurred, we're about to lock
         payload = 'LOCKING'
     elif LockedHint == False:
