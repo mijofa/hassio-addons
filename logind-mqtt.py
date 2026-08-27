@@ -73,10 +73,13 @@ def command_callback(client, unknown, message):
     command = message.payload.decode().split()
     print('mqtt>', command[0] if len(command) == 1 else f'{command[0]} [REDACTED]', flush=True)
     if command[0] == 'LOCK':
+        # Only report 'locking' if we're not already locked, but try locking anyway, just in case
+        if not LockedHint:
+            mqtt_client.publish(topic=state_topic, payload='LOCKING', retain=False)
         # FIXME: Should I do anything if a code is provided here?
         # FIXME: '1' is a magic number for the "first" session, how do we avoid this?
         return login1_manager.LockSession('1')
-    if command[0] == 'UNLOCK':
+    if command[0] == 'UNLOCK':  # FIXME: Only if not already unlocked
         # FIXME: '1' is a magic number for the "first" session, how do we avoid this?
         if totp is None:
             # Raising an exception here would kill the mqtt client, we don't want that
@@ -92,7 +95,12 @@ def command_callback(client, unknown, message):
             # NOTE: Must remain a str despite 'isdigit' above, because the leading 0s are relevant
             if totp.verify(command[1], valid_window=1):
                 print('Correct OTP code provided, unlocking', flush=True)
-                return login1_manager.UnlockSession('1')
+                if LockedHint:
+                    # Only report 'unlocking' if we are actually locked
+                    mqtt_client.publish(topic=state_topic, payload='UNLOCKING', retain=False)
+                # FIXME: This (sometimes?) doesn't turn the screen on
+                login1_manager.UnlockSession('1')
+                return True
             else:
                 # Raising an exception here would kill the mqtt client, we don't want that
                 print("WARNING: Incorrect OTP provided, ignoring", file=sys.stderr, flush=True)
