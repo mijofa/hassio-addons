@@ -37,7 +37,7 @@ if __name__ == "__main__":
     print("Overwriting config.yaml with custom config", flush=True)
     config_file_contents_new = yaml.dump(application_conf)
     config_file_contents_old = CONFIG_FILE.read_text()
-    if CONFIG_FILE_BAKUP.exists():
+    if CONFIG_FILE_BACKUP.exists():
         config_file_contents_backup = CONFIG_FILE_BACKUP.read_text()
     else:
         config_file_contents_backup = ''
