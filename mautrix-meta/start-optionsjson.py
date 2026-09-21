@@ -12,6 +12,7 @@ import yaml
 
 OPTIONS_FILE = pathlib.Path('/data/options.json')
 CONFIG_FILE = pathlib.Path('/data/config.yaml')
+CONFIG_FILE_BACKUP = pathlib.Path('/data/config.yaml~')
 REGISTRATION_FILE = pathlib.Path('/data/registration.yaml')
 REGISTRATIONS_DIR = pathlib.Path('/share/matrix_appservices')
 
@@ -34,7 +35,21 @@ application_conf = yaml.safe_load(HA_options['config.yaml'].format(**HA_options)
 
 if __name__ == "__main__":
     print("Overwriting config.yaml with custom config", flush=True)
-    CONFIG_FILE.write_text(yaml.dump(application_conf))
+    config_file_contents_new = yaml.dump(application_conf)
+    config_file_contents_old = CONFIG_FILE.read_text()
+    if CONFIG_FILE_BAKUP.exists():
+        config_file_contents_backup = CONFIG_FILE_BACKUP.read_text()
+    else:
+        config_file_contents_backup = ''
+
+    # If we have updated config
+    if config_file_contents_new != config_file_contents_old:
+        if config_file_contents_backup != config_file_contents_old and config_file_contents_backup != config_file_contents_new:
+            # Backup current if backup does not match current OR new config
+            CONFIG_FILE_BACKUP.write_text(config_file_contents_old)
+        # Update the config file
+        CONFIG_FILE.write_text(config_file_contents_new)
+
     if not REGISTRATION_FILE.exists():
         # Appservice registration file has not been created, this is probably the first run.
         # So let's generate it and copy it somewhere Synapse can find it.
