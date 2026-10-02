@@ -256,6 +256,17 @@ bus.add_signal_receiver(handler_function=handle_dbus_property_update,
                         signal_name='PropertiesChanged',
                         path_keyword='sender_path')
 
+# FIXME: Use dbus properly!
+# Since the above only waits for the properties to change,
+# the HA entity is unavailable after a restart.
+# So let's query the state one time and see how it looks
+session_props = subprocess.check_output(['loginctl', 'show-session', 'auto', '--property=IdleHint', '--property=LockedHint'], text=True).splitlines()
+handle_dbus_property_update('org.freedesktop.login1.Session',
+                            {k: True if v == 'yes' else False for k, v in [l.split('=', 1) for l in session_props]},
+                            {},
+                            '/org/freedesktop/login1/session/...')
+# handle_dbus_property_update('org.freedesktop.login1.Session', {...}, {}, '/org/freedesktop/login1/session/...')
+
 systemd.daemon.notify('READY=1')
 loop.run()
 # We should never actually reach this point unless something's gone wrong as we aren't handling kill signals or any legitimate way of stopping the service
