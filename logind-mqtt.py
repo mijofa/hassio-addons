@@ -10,6 +10,8 @@ import subprocess
 import uuid
 import typing
 
+import systemd.daemon
+
 import pyotp
 
 import paho.mqtt.client
@@ -131,7 +133,6 @@ mqtt_client.username_pw_set(username='guest', password='guest')
 mqtt_client.connect_srv()
 # mqtt_client.loop_start()
 
-# FIXME: Notify Systemd that we're ready
 state_topic, command_topic = mqtt_discovery(mqtt_client)
 
 mqtt_client.message_callback_add(sub=command_topic, callback=command_callback)
@@ -157,6 +158,8 @@ def loop_mqtt_read(socket, condition):
     crash_on_mqtt_error(mqtt_client.loop_read())
     return True
 def loop_mqtt_regularly():
+    systemd.daemon.notify('WATCHDOG=1')
+
     if mqtt_client.want_write():
         # This handles sending data where publish was attempted during loop_read()
         # Otherwise publish does so directly and doesn't require the loop
@@ -247,13 +250,14 @@ def handle_dbus_property_update(interface: str,
         # FIXME: Use 'MOTOR_JAMMED' or 'MOTOR_OK' instead?
         mqtt_client.publish(topic=AVAILABILITY_TOPIC, payload='offline', retain=False)
 
-
 # FIXME: WTF couldn't I make this work with login1.connect_to_signal?
 bus.add_signal_receiver(handler_function=handle_dbus_property_update,
                         dbus_interface='org.freedesktop.DBus.Properties',
                         signal_name='PropertiesChanged',
                         path_keyword='sender_path')
 
+systemd.daemon.notify('READY=1')
 loop.run()
 # We should never actually reach this point unless something's gone wrong as we aren't handling kill signals or any legitimate way of stopping the service
+systemd.daemon.notify('STOPPING=1')
 exit(2)
