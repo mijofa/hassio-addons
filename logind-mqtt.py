@@ -140,26 +140,29 @@ mqtt_client.subscribe(topic=command_topic)
 DBusGMainLoop(set_as_default=True)
 loop = GLib.MainLoop()
 
+class MQTTError(paho.mqtt.MQTTException):
+    pass
+def crash_on_mqtt_error(rc: paho.mqtt.client.MQTTErrorCode):
+    if rc == paho.mqtt.client.MQTTErrorCode.MQTT_ERR_SUCCESS:
+        return rc
+    else:
+        systemd.daemon.notify('STOPPING=1')
+        loop.quit()
+        raise MQTTError(f'(0) {paho.mqtt.client.error_string(rc)}')
 
 ## Bypass paho.mqtt.client's loop and use GLib's instead
 def loop_mqtt_read(socket, condition):
     assert socket == mqtt_client.socket()
     assert condition == GLib.IO_IN
-    rc = mqtt_client.loop_read()
-    # FIXME: Raise a real exception here
-    assert rc == paho.mqtt.client.MQTTErrorCode.MQTT_ERR_SUCCESS
+    crash_on_mqtt_error(mqtt_client.loop_read())
     return True
 def loop_mqtt_regularly():
     if mqtt_client.want_write():
         # This handles sending data where publish was attempted during loop_read()
         # Otherwise publish does so directly and doesn't require the loop
-        rc = mqtt_client.loop_write()
-        # FIXME: Raise a real exception here
-        assert rc == paho.mqtt.client.MQTTErrorCode.MQTT_ERR_SUCCESS
+        crash_on_mqtt_error(mqtt_client.loop_write())
     # This mostly just handles pings & keepalives
-    rc = mqtt_client.loop_misc()
-    # FIXME: Raise a real exception here
-    assert rc == paho.mqtt.client.MQTTErrorCode.MQTT_ERR_SUCCESS
+    crash_on_mqtt_error(mqtt_client.loop_misc())
     return True
 GLib.io_add_watch(mqtt_client.socket(), GLib.IO_IN, loop_mqtt_read)
 # GLib.idle_add(loop_mqtt_regularly)
@@ -252,3 +255,5 @@ bus.add_signal_receiver(handler_function=handle_dbus_property_update,
                         path_keyword='sender_path')
 
 loop.run()
+# We should never actually reach this point unless something's gone wrong as we aren't handling kill signals or any legitimate way of stopping the service
+exit(2)
