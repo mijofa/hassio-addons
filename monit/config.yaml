@@ -1,0 +1,36 @@
+name: "Monit"
+description: >-
+  Monit is an open source utility for managing and monitoring, processes, programs, files, directories and filesystems on a UNIX system. Monit conducts automatic maintenance and repair and can execute meaningful causal actions in error situations.
+url: "https://github.com/MMonit/monit"
+version: "0.0.1"
+slug: "monit"
+arch:
+  # - aarch64
+  - amd64
+  # - armhf
+  # - armv7
+  # - i386
+map:
+  # We store config here
+  - share:rw
+#  # Makes sense to store a https key in /ssl?
+#  - ssl:ro
+ports:
+  2812/tcp: 2812
+ports_description:
+  2812/tcp: "Monit's http listener"
+schema:
+  monitrc: str
+options:
+  monitrc: |
+    set daemon 120
+    set init  # FIXME: Launch with '-I' argument instead
+    set log /dev/stdout
+    # set pidfile  # FIXME: Confirm this doesn't matter?
+    set idfile /data/monit_id
+    set statefile /data/monit_state
+
+    # Do not overwrite this, use Home Assistant's port forward stuff instead
+    set httpd port 2812 and
+        allow 0.0.0.0/0
+        # FIXME: IPv6?
