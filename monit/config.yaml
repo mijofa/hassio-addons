@@ -2,21 +2,22 @@ name: "Monit"
 description: >-
   Monit is an open source utility for managing and monitoring, processes, programs, files, directories and filesystems on a UNIX system. Monit conducts automatic maintenance and repair and can execute meaningful causal actions in error situations.
 url: "https://github.com/MMonit/monit"
-version: "0.0.1"
+version: "0.0.2"
 slug: "monit"
 arch:
   # - aarch64
   - amd64
-  # - armhf
-  # - armv7
-  # - i386
 map:
-  # We store config here
-  - share:rw
-#  # Makes sense to store a https key in /ssl?
-#  - ssl:ro
+  # FIXME: Setup app_config? ref: https://contributors.home-assistant.io/apps/reference/configuration/#folders
+  - type: app_config
+    read_only: false
+watchdog: "http://[HOST]:[PORT:2812]/_ping"
+ingress: true
+ingress_port: 2812
+panel_title: Monit
+panel_icon: cbi:monit
 ports:
-  2812/tcp: 2812
+  2812/tcp: null
 ports_description:
   2812/tcp: "Monit's http listener"
 schema:
@@ -32,5 +33,20 @@ options:
 
     # Do not overwrite this, use Home Assistant's port forward stuff instead
     set httpd port 2812 and
-        allow 0.0.0.0/0
-        # FIXME: IPv6?
+        allow 0.0.0.0/0    # FIXME: IPv6?
+
+    check host "Home Assistant"
+      address supervisor
+      if failed ping then alert
+      if failed
+        port 80
+        protocol http
+        # request '/info'
+        # with http headers [Authorization: Bearer {SUPERVISOR_TOKEN}]
+        # # NOTE: This assumes 'result' is always the first key in the json response.
+        # #       This has been true in my system, but I don't think that's documented & reliable behaviour
+        # content = '^\{{"result":"ok",.*\}}$'
+        request '/supervisor/ping'
+        # FIXME: This is a somewhat dodgy attempt at handling JSON properly regardless of whitespace... this should probably just go away.
+        content = '^\{{[[:space:]]*"result"[[:space:]]*:[[:space:]]*"ok"[[:space:]]*,[[:space:]]*"data"[[:space:]]*:[[:space:]]*\{{[[:space:]]*\}}[[:space:]]*\}}$'
+        then alert

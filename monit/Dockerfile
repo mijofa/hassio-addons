@@ -63,4 +63,3 @@ RUN git clone https://github.com/MMonit/monit.git && \
 
 COPY start-optionsjson.py /
 ENTRYPOINT ["/start-optionsjson.py"]
-
