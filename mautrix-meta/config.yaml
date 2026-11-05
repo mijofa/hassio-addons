@@ -2,7 +2,7 @@ name: "Mautrix Meta bridge"
 description: >-
   Pretty bare-bones add-on wrapper for the dock.mau.dev/mautrix/meta container
 url: "https://mau.dev/mautrix/meta"
-version: "0.0.11"
+version: "0.0.12"
 slug: "mautrix-meta"
 arch:
   # - aarch64
@@ -72,8 +72,8 @@ options:
     disable_view_once: false
     # Should FB marketplace chats have a separate space inside the main Facebook space?
     marketplace_space: true
-    # Log raw Bloks payloads even at debug level, with any user identifiers or credentials redacted.
-    log_redacted_bloks_payloads: false
+    # Log raw Bloks payloads and login responses even at debug level, with any user identifiers or credentials redacted.
+    log_redacted_login_responses: false
 
     # Thread backfill settings for syncing older conversations
     thread_backfill:
