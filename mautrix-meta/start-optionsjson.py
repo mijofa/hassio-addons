@@ -1,68 +1,69 @@
 #!/usr/bin/python3
 """Small wrapper for the base upstream startup script to read config from Home Assistant's /data/options.json."""
 import json
-# import os
+import os
 import pathlib
 # import secrets
 import subprocess
-import sys
-import time
+# import sys
+# import time
 
-import yaml
+# import yaml
 
-OPTIONS_FILE = pathlib.Path('/data/options.json')
-CONFIG_FILE = pathlib.Path('/data/config.yaml')
-CONFIG_FILE_BACKUP = pathlib.Path('/data/config.yaml~')
-REGISTRATION_FILE = pathlib.Path('/data/registration.yaml')
-REGISTRATIONS_DIR = pathlib.Path('/share/matrix_appservices')
+if pathlib.Path('/data/config.yaml').exists():
+    if not pathlib.Path('/config/config.yaml').exists():
+        pathlib.Path('/config/config.yaml').write_bytes(pathlib.Path('/data/config.yaml').read_bytes())
+        print("Copied config to new location, go check on that before continuing")
+        print("/mnt/data/supervisor/apps/data/674b3982_mautrix-meta/ -> /mnt/data/supervisor/app_configs/674b3982_mautrix-meta/")
+    else:
+        print("Old config still exists, wtf?")
 
-if not OPTIONS_FILE.exists():
-    raise FileNotFoundError("No /data/options.json file")
+    exit()
 
-HA_options = json.loads(OPTIONS_FILE.read_text())
-
-# Get the as & hs tokens directly from the registation yaml file used by Synapse
-if REGISTRATION_FILE.exists():
-    registration_conf = yaml.safe_load(REGISTRATION_FILE.read_text())
-    HA_options['as_token'] = registration_conf['as_token']
-    HA_options['hs_token'] = registration_conf['hs_token']
-else:
-    HA_options['as_token'] = "This value is generated when generating the registration"
-    HA_options['hs_token'] = "This value is generated when generating the registration"
-
-# Reading this in as YAML to dump it back out is unnecessary, but doesn't hurt, and might make YAML syntax errors more obvious
-application_conf = yaml.safe_load(HA_options['config.yaml'].format(**HA_options))
+CONFIG_FILE = pathlib.Path('/config/config.yaml')
+REGISTRATION_FILE = pathlib.Path('/share/matrix_appservices/674b3982_mautrix-meta.yaml')
+APPSERVICE_EXECUTABLE = pathlib.Path('/usr/bin/mautrix-meta')
 
 if __name__ == "__main__":
-    print("Overwriting config.yaml with custom config", flush=True)
-    config_file_contents_new = yaml.dump(application_conf)
-    config_file_contents_old = CONFIG_FILE.read_text()
-    if CONFIG_FILE_BACKUP.exists():
-        config_file_contents_backup = CONFIG_FILE_BACKUP.read_text()
+    if not CONFIG_FILE.exists():
+        subprocess.check_call([APPSERVICE_EXECUTABLE, '--config', CONFIG_FILE, '--generate-example-config'])
+        os.chown(CONFIG_FILE, UID, GID)
+        print("Didn't find a config file.")
+        print("Copied default config file to", CONFIG_FILE)
+        print("Modify that config file to your liking.")
+        print("Start the container again after that to generate the registration file.")
+
+        # FIXME: I'd really like to apply some more sensible defaults for the HA environments, but I can't do that while preserving comments/etc.
+        #        So for now we ignore this.
+
+        exit()
+    elif not REGISTRATION_FILE.exists():
+        subprocess.check_call([APPSERVICE_EXECUTABLE, '--generate-registration', '--config', CONFIG_FILE, '--registration', REGISTRATION_FILE])
+        os.chown(REGISTRATION_FILE, UID, GID)
+        print("Didn't find a registration file.")
+        print("Generated one for you at", REGISTRATION_FILE)
+        print("See https://docs.mau.fi/bridges/general/registering-appservices.html on how to use it.")
+
+        exit()
     else:
-        config_file_contents_backup = ''
-
-    # If we have updated config
-    if config_file_contents_new != config_file_contents_old:
-        if config_file_contents_backup != config_file_contents_old and config_file_contents_backup != config_file_contents_new:
-            # Backup current if backup does not match current OR new config
-            CONFIG_FILE_BACKUP.write_text(config_file_contents_old)
-        # Update the config file
-        CONFIG_FILE.write_text(config_file_contents_new)
-
-    if not REGISTRATION_FILE.exists():
-        # Appservice registration file has not been created, this is probably the first run.
-        # So let's generate it and copy it somewhere Synapse can find it.
-        subprocess.check_call(['/docker-run.sh'])
-        assert REGISTRATION_FILE.exists()
-        if not REGISTRATIONS_DIR.is_dir():
-            REGISTRATIONS_DIR.mkdir()
-
-        # FIXME: Should I be regularly updating this?
-        (REGISTRATIONS_DIR / 'mautrix-meta.yaml').write_text(REGISTRATION_FILE.read_text())
-        print("Appservice registration yaml generated, go sort out registration before restarting this addon.",
-              file=sys.stderr, flush=True)
-    else:
-        # Start normally
         print("Starting service", flush=True)
-        subprocess.check_call(['/docker-run.sh'])
+        UID = int(os.environ['UID'])
+        GID = int(os.environ.get('GID', UID))
+
+        os.chdir('/data')  # FIXME: What actually belongs here?
+        # Equivalent to the `chown -R ...` in docker-run.sh
+        # FIXME: That runs on only /data, do we need only /config?
+        for dirpath, dirnames, filenames in [*pathlib.Path('/config').walk(follow_symlinks=False),
+                                             *pathlib.Path('/data').walk(follow_symlinks=False)]:
+            os.chown(dirpath, UID, GID)
+            for filename in filenames:
+                os.chown(dirpath / filename, UID, GID)
+
+        # This should be equivalent to `su-exec` as called from docker-run.sh
+        # ref: https://github.com/ncopa/su-exec/blob/master/su-exec.c
+        os.setgroups([GID])
+        # os.setresgid(GID, GID, GID)
+        os.setgid(GID)
+        # os.setresuid(UID, UID, UID)  # Must be last, because it drops privs required for the above
+        os.setuid(UID)  # Must be last, because it drops privs required for the above
+        os.execl(APPSERVICE_EXECUTABLE, 'mautrix-meta', '--config', CONFIG_FILE, '--registration', REGISTRATION_FILE)
